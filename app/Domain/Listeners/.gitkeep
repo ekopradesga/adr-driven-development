@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Domain\Listeners;
+
+/**
+ * Domain Listeners Directory
+ *
+ * This directory contains event listeners that handle side effects
+ * triggered by domain events.
+ *
+ * Listeners are responsible for:
+ * - Sending notifications
+ * - Writing audit logs (TimelineEvent, ActivityLog)
+ * - Updating derived state (caches, counters)
+ * - Queueing background jobs
+ * - Triggering workflows
+ *
+ * Naming convention: {Action}{EventName}Listener
+ *
+ * Examples:
+ * - SendUserCreatedNotificationListener
+ * - LogUserUpdatedActivityListener
+ * - UpdateSubscriptionCacheListener
+ *
+ * See: docs/architecture/events.md
+ */

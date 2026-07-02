@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ProfileController;
@@ -23,6 +24,13 @@ Route::middleware('auth')->group(function () {
     // -------------------------------------------------------------------------
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    // -------------------------------------------------------------------------
+    // Billing Management
+    // -------------------------------------------------------------------------
+    Route::resource('invoices', InvoiceController::class)->except(['destroy']);
+    Route::post('invoices/{invoice}/publish', [InvoiceController::class, 'publish'])->name('invoices.publish');
+    Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
 
     // -------------------------------------------------------------------------
     // Subscription Management

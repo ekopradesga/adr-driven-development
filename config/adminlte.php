@@ -352,6 +352,14 @@ return [
             'icon' => 'fas fa-fw fa-wifi',
         ],
 
+        // Billing Management
+        ['header' => 'BILLING'],
+        [
+            'text' => 'Invoices',
+            'url'  => 'invoices',
+            'icon' => 'fas fa-fw fa-file-invoice-dollar',
+        ],
+
         // Account
         ['header' => 'ACCOUNT'],
         [

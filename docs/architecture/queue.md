@@ -1116,9 +1116,10 @@ class SendInvoiceEmailJob implements ShouldQueue
 
 ### Current State
 
-- No queued jobs implemented
-- `queue.php` config uses `sync` driver (development)
-- No `jobs` or `failed_jobs` tables
+- `ProvisionOnuJob` implemented under `app/Jobs/Provisioning/`
+- `queue.php` includes provisioning domain queue channel (`default-provisioning`)
+- `failed_jobs` table migration exists
+- `jobs` table migration added for queue driver execution
 
 ### Phase 1: Infrastructure Setup (Sprint 1.4)
 
@@ -1153,6 +1154,13 @@ class SendInvoiceEmailJob implements ShouldQueue
 - Implement `SyncOnuConfigJob`
 - Queue: `default-provisioning`
 - Tries: 5, Timeout: 180s (OLT SNMP may be slow)
+
+### Phase 4.1: Provisioning Queue Infrastructure (Sprint 3.9)
+
+- `jobs` table migration added for queued provisioning execution
+- `PROVISIONING_QUEUE` environment key added to centralize provisioning queue channel
+- Subscription activation dispatch now resolves queue channel from config
+- Remaining deployment step: run migrations and start queue workers in non-sync environments
 
 ### Phase 5: Maintenance Jobs (Sprint 1.8+)
 

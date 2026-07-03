@@ -1723,3 +1723,24 @@
 
 **Notes:** `ProvisionOnuJob` currently performs the local ONU status transition and retry-safe audit logging; external adapter integration can be layered on later without changing the job contract.
 
+---
+
+### 2026-07-04 | Backend | Sprint 3.9 — Provision Queue
+
+**Summary:** Implemented provisioning queue infrastructure to support asynchronous execution beyond sync mode. Added the `jobs` table migration, centralized provisioning queue channel configuration in `queue.php` and `.env.example`, and updated provisioning dispatch to resolve the queue channel from configuration instead of a hardcoded value.
+
+**Files Added:**
+- database/migrations/2026_07_04_000003_create_jobs_table.php
+
+**Files Modified:**
+- config/queue.php
+- .env.example
+- app/Jobs/Provisioning/ProvisionOnuJob.php
+- app/Services/Subscription/SubscriptionService.php
+- docs/architecture/queue.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Provisioning queue execution is now explicitly infrastructure-ready for database-backed queue workers, and queue channel selection for provisioning is policy/config-driven through `PROVISIONING_QUEUE`.
+
+**Notes:** Runtime queue execution still requires environment setup (`QUEUE_CONNECTION=database` or `redis`), migration execution, and active workers in deployment environments.
+

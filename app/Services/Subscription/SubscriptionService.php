@@ -169,7 +169,7 @@ class SubscriptionService extends AbstractCrudService
                     $subscription->onu_id,
                     $subscription->id,
                     auth()->id()
-                )->onQueue('default-provisioning')->afterCommit();
+                )->onQueue((string) config('queue.provisioning.queue', 'default-provisioning'))->afterCommit();
             }
 
             return $subscription->fresh();

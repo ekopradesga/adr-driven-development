@@ -27,7 +27,9 @@ class ProvisionOnuJob implements ShouldQueue
         public readonly int $onuId,
         public readonly ?int $subscriptionId = null,
         public readonly ?int $actorId = null,
-    ) {}
+    ) {
+        $this->queue = (string) config('queue.provisioning.queue', 'default-provisioning');
+    }
 
     public function handle(): void
     {

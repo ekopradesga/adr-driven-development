@@ -75,6 +75,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Domain Queue Channels
+    |--------------------------------------------------------------------------
+    |
+    | Domain-specific queue channels keep high-volume or slow operations from
+    | starving unrelated jobs. Provisioning jobs use this configuration.
+    |
+    */
+
+    'provisioning' => [
+        'queue' => env('PROVISIONING_QUEUE', 'default-provisioning'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Job Batching
     |--------------------------------------------------------------------------
     |

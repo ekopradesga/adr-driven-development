@@ -193,6 +193,7 @@ The provisioning request is waiting for execution.
 - The queue must support retry, prioritization, and manual intervention.
 - Queue ordering must be policy-driven.
 - Queue state must preserve request correlation.
+- Manual intervention may enqueue provisioning intent through the `provision:onu` command when policy allows.
 
 ### Generated Events
 - Provisioning Queued

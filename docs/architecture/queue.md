@@ -1162,6 +1162,13 @@ class SendInvoiceEmailJob implements ShouldQueue
 - Subscription activation dispatch now resolves queue channel from config
 - Remaining deployment step: run migrations and start queue workers in non-sync environments
 
+### Phase 4.2: Provisioning Command (Sprint 3.10)
+
+- `provision:onu` command added for operator-driven queue placement
+- Command supports queueing by `--subscription-id` or direct `--onu-id`
+- Guardrails enforce valid target resolution and safe default behavior (active subscription / non-retired ONU)
+- `--force` allows controlled requeue for exception handling and manual intervention workflows
+
 ### Phase 5: Maintenance Jobs (Sprint 1.8+)
 
 - Implement `CleanupOldLogsJob`

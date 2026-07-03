@@ -1744,3 +1744,22 @@
 
 **Notes:** Runtime queue execution still requires environment setup (`QUEUE_CONNECTION=database` or `redis`), migration execution, and active workers in deployment environments.
 
+---
+
+### 2026-07-04 | Backend | Sprint 3.10 — Provision Command
+
+**Summary:** Implemented a dedicated provisioning CLI entrypoint to support controlled manual queue placement and requeue workflows. Added `provision:onu` Artisan command with target resolution by `--subscription-id` or direct `--onu-id`, optional `--actor-id` attribution, and safety guardrails that prevent non-policy queueing unless `--force` is explicitly set.
+
+**Files Added:**
+- app/Console/Commands/ProvisionOnuCommand.php
+- tests/Feature/ProvisionOnuCommandTest.php
+
+**Files Modified:**
+- docs/architecture/queue.md
+- docs/workflows/provisioning-workflow.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** The provisioning queue boundary now has an explicit operational command surface for manual intervention without introducing synchronous device mutation into billing flows. Queue placement remains asynchronous and config-driven through existing queue policy.
+
+**Notes:** The command defaults to safe behavior (active subscription and non-retired ONU checks) and supports controlled override through `--force` for exception operations.
+

@@ -147,6 +147,25 @@ Package price and profile can change over time, but financial snapshots in invoi
 - Invoice Item
 - Billing Period
 
+## Package Status
+
+### Definition
+The lifecycle state of a `Package` commercial plan. Expressed as the `packages.status` column and the `PackageStatus` PHP backed enum.
+
+### Notes
+The four canonical states are:
+- **Draft** (`draft`) - prepared but not assignable. Default.
+- **Active** (`active`) - assignable to new subscriptions.
+- **Deprecated** (`deprecated`) - not assignable for new subscriptions; existing references remain valid.
+- **Retired** (`retired`) - terminal historical state; not assignable.
+
+Package status controls assignment eligibility but does not mutate historical invoice snapshots.
+
+### Related Terms
+- Package
+- Subscription
+- Invoice Item
+
 ## Subscription
 
 ### Definition

@@ -38,7 +38,6 @@ class ServiceAreaModuleTest extends TestCase
             ->post(route('clusters.store'), [
                 'name' => 'Central Operations',
                 'code' => 'CLU-CEN-01',
-                'status' => ClusterStatus::Planned->value,
             ])
             ->assertRedirect();
 

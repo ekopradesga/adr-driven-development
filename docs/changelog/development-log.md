@@ -1364,3 +1364,87 @@
 
 **Notes:** Static validation passed for all new collector PHP and Blade files. A targeted `php artisan test --filter=CollectorModuleTest` invocation was attempted, but the environment returned no usable test output and an additional route verification command was skipped by user action, so runtime confirmation is still pending.
 
+---
+
+### 2026-07-03 | Backend | Sprint 3.2 — Cluster Module Lifecycle Hardening
+
+**Summary:** Completed Sprint 3.2 as a blocker-free Cluster hardening pass. Verified architecture blockers are closed (ARCH-033/ARCH-034) and aligned the Cluster implementation with the documented lifecycle: creation now always starts in `planned`, inactivation now allows historical customer references while still blocking active dependencies, and UI actions now allow `planned -> inactive` transitions. Added dedicated Cluster feature tests to make the module independently verifiable.
+
+**Files Added:**
+- tests/Feature/ClusterModuleTest.php
+
+**Files Modified:**
+- app/Services/ServiceArea/ClusterService.php
+- app/Http/Requests/ServiceArea/StoreClusterRequest.php
+- resources/views/clusters/create.blade.php
+- resources/views/clusters/show.blade.php
+- tests/Feature/ServiceAreaModuleTest.php
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Cluster behavior now matches the Service Area workflow contract for lifecycle semantics, especially around initial state and inactivation preconditions. The module remains within the `service-area.*` namespace and keeps state transitions service-owned.
+
+**Notes:** Static validation (`get_errors`) passed for all touched files. A targeted `php artisan test --filter=ClusterModuleTest` run was attempted, but the environment again returned no output, so runtime confirmation remains pending.
+
+---
+
+### 2026-07-03 | Architecture | Sprint 3.3 Pre-Work — Package Module Architecture Finalization
+
+**Summary:** Closed the Package module architecture blocker before implementation by formalizing the complete Service Package Management contract. Added canonical package lifecycle decisions and `package.*` permission namespace governance, created a dedicated package workflow document, upgraded Package entity documentation with column-level schema and business rules, expanded business events with package lifecycle events, and recorded/closed ARCH-035 in the architecture backlog.
+
+**Files Added:**
+- docs/workflows/package-workflow.md
+
+**Files Modified:**
+- docs/architecture/decisions.md
+- docs/architecture/glossary.md
+- docs/database/entities.md
+- docs/architecture/business-events.md
+- docs/architecture/architecture-backlog.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Service Package Management is now implementation-ready with explicit lifecycle states (`draft`, `active`, `deprecated`, `retired`), transition guards, permission namespace, event contract, and schema-level constraints aligned across architecture documents.
+
+**Notes:** Documentation-only pre-work. No runtime code execution performed in this step.
+
+---
+
+### 2026-07-03 | Backend | Sprint 3.3 — Package Module Implementation
+
+**Summary:** Implemented the complete Package module following the finalized architecture contract. Replaced Package stub behavior with canonical enum/model/service/policy/controller/request layers, added package lifecycle domain events, wired package routes and menu integration, seeded `package.*` permissions and role mappings, created package CRUD and lifecycle views, and added dedicated feature tests. Also aligned subscription package selection to active package status while preserving current package visibility in edit flows.
+
+**Files Added:**
+- app/Enums/PackageStatus.php
+- app/Domain/Events/PackageCreated.php
+- app/Domain/Events/PackageActivated.php
+- app/Domain/Events/PackageDeprecated.php
+- app/Domain/Events/PackageRetired.php
+- app/Policies/PackagePolicy.php
+- app/Http/Controllers/PackageController.php
+- app/Services/Package/PackageService.php
+- app/Http/Requests/Package/StorePackageRequest.php
+- app/Http/Requests/Package/UpdatePackageRequest.php
+- app/Http/Requests/Package/ActivatePackageRequest.php
+- app/Http/Requests/Package/DeprecatePackageRequest.php
+- app/Http/Requests/Package/RetirePackageRequest.php
+- database/factories/PackageFactory.php
+- resources/views/packages/index.blade.php
+- resources/views/packages/create.blade.php
+- resources/views/packages/edit.blade.php
+- resources/views/packages/show.blade.php
+- tests/Feature/PackageModuleTest.php
+
+**Files Modified:**
+- app/Models/Package.php
+- app/Services/Subscription/SubscriptionService.php
+- app/Providers/AuthServiceProvider.php
+- database/migrations/2026_06_25_000002_create_packages_table.php
+- database/seeders/PermissionSeeder.php
+- database/seeders/RolePermissionSeeder.php
+- routes/web.php
+- config/adminlte.php
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Package lifecycle is now service-owned and policy-protected with canonical status values and transition checks. Subscription package selection now follows package availability status rules from the Package workflow.
+
+**Notes:** Static validation passed (`get_errors` no errors found). A targeted `php artisan test --filter=PackageModuleTest` run was attempted, but this environment returned no output, so runtime confirmation remains pending.
+

@@ -63,6 +63,17 @@ class PermissionSeeder extends Seeder
             ['key' => 'subscription.terminate',  'name' => 'Terminate Subscriptions',  'category' => 'subscription'],
 
             // ----------------------------------------------------------------
+            // Package Management
+            // ----------------------------------------------------------------
+            ['key' => 'package.view',      'name' => 'View Packages',      'category' => 'package'],
+            ['key' => 'package.create',    'name' => 'Create Packages',    'category' => 'package'],
+            ['key' => 'package.update',    'name' => 'Update Packages',    'category' => 'package'],
+            ['key' => 'package.activate',  'name' => 'Activate Packages',  'category' => 'package'],
+            ['key' => 'package.deprecate', 'name' => 'Deprecate Packages', 'category' => 'package'],
+            ['key' => 'package.retire',    'name' => 'Retire Packages',    'category' => 'package'],
+            ['key' => 'package.export',    'name' => 'Export Packages',    'category' => 'package'],
+
+            // ----------------------------------------------------------------
             // Billing
             // ----------------------------------------------------------------
             ['key' => 'billing.view',     'name' => 'View Billing Records', 'category' => 'billing'],

@@ -808,14 +808,43 @@ Draft -> Active -> Deprecated -> Retired.
 
 Deletion behavior: Soft Delete when not referenced by active subscription; Restrict otherwise.
 
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `package_code` | VARCHAR(50) | No | Unique commercial package code |
+| `name` | VARCHAR(255) | No | Display package name |
+| `downstream_kbps` | INT UNSIGNED | No | Download bandwidth profile |
+| `upstream_kbps` | INT UNSIGNED | No | Upload bandwidth profile |
+| `contention_ratio` | INT UNSIGNED | No | Default `1` |
+| `monthly_price` | DECIMAL(12,2) | No | Recurring package fee |
+| `setup_fee` | DECIMAL(12,2) | No | Default `0.00` |
+| `billing_cycle_type` | VARCHAR(30) | No | Default `monthly` |
+| `billing_cycle_days` | SMALLINT UNSIGNED | Yes | Optional cycle override |
+| `status` | ENUM | No | `draft` (default), `active`, `deprecated`, `retired` |
+| `description` | TEXT | Yes | Optional package description |
+| `created_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `updated_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `deleted_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+| `deleted_at` | TIMESTAMP | Yes | Soft delete |
+
 ### Relationships
 - Package 1 -> N Subscription
 
 ### Key Attributes
-Plan name, speed profile, pricing profile, commercial status.
+Package code, plan name, speed profile, pricing profile, and commercial lifecycle status.
 
 ### Business Rules
 Package changes do not alter historical invoice snapshots.
+
+Only `active` packages may be assigned to new subscriptions.
+
+`deprecated` and `retired` packages remain valid for historical references but must not be assignable.
+
+Retirement is blocked while active subscriptions still reference the package.
 
 ### Notes
 Used by billing engine through subscription linkage.
@@ -830,7 +859,7 @@ Yes
 Core
 
 ### Lifecycle Reference
-N/A
+docs/workflows/package-workflow.md
 
 ### Immutability
 Mutable
@@ -845,7 +874,10 @@ Yes
 - Global Search: No
 
 ### Produces Events
-None
+- PackageCreated
+- PackageActivated
+- PackageDeprecated
+- PackageRetired
 
 ### Consumes Events
 None

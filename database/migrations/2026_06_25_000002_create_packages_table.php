@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('setup_fee', 12, 2)->default(0);
             $table->string('billing_cycle_type', 30)->default('monthly');
             $table->unsignedSmallInteger('billing_cycle_days')->nullable();
-            $table->boolean('is_active')->default(true)->index();
+            $table->string('status', 30)->default('draft')->index();
             $table->text('description')->nullable();
 
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();

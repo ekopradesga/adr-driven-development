@@ -10,6 +10,7 @@ use App\Domain\Events\SubscriptionReactivationPending;
 use App\Domain\Events\SubscriptionSuspended;
 use App\Domain\Events\SubscriptionTerminated;
 use App\Enums\CustomerStatus;
+use App\Enums\PackageStatus;
 use App\Enums\SubscriptionStatus;
 use App\Enums\SubscriptionType;
 use App\Models\Customer;
@@ -299,7 +300,10 @@ class SubscriptionService extends AbstractCrudService
     {
         return [
             'customers' => Customer::orderBy('name')->get(['id', 'customer_number', 'name']),
-            'packages'  => Package::orderBy('name')->get(['id', 'name', 'monthly_price', 'downstream_kbps', 'upstream_kbps']),
+            'packages'  => Package::query()
+                ->where('status', PackageStatus::Active->value)
+                ->orderBy('name')
+                ->get(['id', 'name', 'monthly_price', 'downstream_kbps', 'upstream_kbps']),
             'types'     => SubscriptionType::cases(),
             'prefill'   => $filters,
         ];
@@ -307,9 +311,19 @@ class SubscriptionService extends AbstractCrudService
 
     public function buildEditData(Subscription $subscription): array
     {
+        $activePackages = Package::query()
+            ->where('status', PackageStatus::Active->value)
+            ->orderBy('name')
+            ->get(['id', 'name', 'monthly_price', 'downstream_kbps', 'upstream_kbps']);
+
+        $currentPackage = $subscription->package;
+        if ($currentPackage && $activePackages->where('id', $currentPackage->id)->isEmpty()) {
+            $activePackages->prepend($currentPackage);
+        }
+
         return [
             'subscription' => $subscription->loadMissing(['customer', 'package']),
-            'packages'     => Package::orderBy('name')->get(['id', 'name', 'monthly_price', 'downstream_kbps', 'upstream_kbps']),
+            'packages'     => $activePackages,
             'types'        => SubscriptionType::cases(),
             'statuses'     => SubscriptionStatus::cases(),
         ];

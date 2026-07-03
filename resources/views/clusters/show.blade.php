@@ -12,7 +12,7 @@
                 @endif
             @endcan
             @can('inactivate', $cluster)
-                @if ($cluster->isActive())
+                @if (!$cluster->isInactive())
                     <form method="POST" action="{{ route('clusters.inactivate', $cluster) }}">@csrf<button class="btn btn-sm btn-dark">Inactivate</button></form>
                 @endif
             @endcan

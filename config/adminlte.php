@@ -352,6 +352,11 @@ return [
             'icon' => 'fas fa-fw fa-wifi',
         ],
         [
+            'text' => 'Packages',
+            'url'  => 'packages',
+            'icon' => 'fas fa-fw fa-box-open',
+        ],
+        [
             'text' => 'Territories',
             'icon' => 'fas fa-fw fa-map-marked-alt',
             'submenu' => [

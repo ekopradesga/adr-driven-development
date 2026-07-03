@@ -550,6 +550,223 @@ Archive retention automation.
 
 ---
 
+## PackageCreated
+
+### Event Name
+`PackageCreated`
+
+### Description
+A new service package has been defined in draft state.
+
+### Category
+Domain Event
+
+### Producer
+Service Package Management
+
+### Consumers
+- Timeline
+- Activity Log
+
+### Trigger
+An authorized actor creates a new package profile.
+
+### Business Meaning
+The platform has a new commercial package definition available for staged preparation.
+
+### Related Workflow
+Package Workflow - Draft state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+No.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Package identity, actor, and creation timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automatic package catalog publishing draft review.
+
+---
+
+## PackageActivated
+
+### Event Name
+`PackageActivated`
+
+### Description
+A service package has become active and assignable for subscriptions.
+
+### Category
+Domain Event
+
+### Producer
+Service Package Management
+
+### Consumers
+- Subscription Lifecycle
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor activates a draft or deprecated package.
+
+### Business Meaning
+The package is now operationally available for new service assignment.
+
+### Related Workflow
+Package Workflow - Active state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal catalog notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Activation actor, prior state, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Package rollout windows and staged availability.
+
+---
+
+## PackageDeprecated
+
+### Event Name
+`PackageDeprecated`
+
+### Description
+A service package has been marked as deprecated and removed from new assignment use.
+
+### Category
+Domain Event
+
+### Producer
+Service Package Management
+
+### Consumers
+- Subscription Lifecycle
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor deprecates an active package.
+
+### Business Meaning
+The package remains historical but can no longer be selected for new subscription assignment.
+
+### Related Workflow
+Package Workflow - Deprecated state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal governance notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Deprecation actor, reason context, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automated migration campaign suggestions.
+
+---
+
+## PackageRetired
+
+### Event Name
+`PackageRetired`
+
+### Description
+A service package has been retired from operational use and moved to terminal historical state.
+
+### Category
+Domain Event
+
+### Producer
+Service Package Management
+
+### Consumers
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor retires a package after active-subscription preconditions pass.
+
+### Business Meaning
+The package is terminal and permanently unavailable for operational assignment.
+
+### Related Workflow
+Package Workflow - Retired state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal retirement notice when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Retirement actor, dependency validation context, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automated archive retention and cleanup policy hooks.
+
+---
+
 ## CustomerUpdated
 
 ### Event Name
@@ -3204,6 +3421,10 @@ Impersonation session summary report for compliance review.
 | ServiceAreaActivated | Area and Assignment Management | Identity & Access, Timeline, Activity Log, Reporting | Low | Domain |
 | ServiceAreaMerged | Area and Assignment Management | Customer Management, Collector Workflow, Ticket Workflow, Timeline, Activity Log, Reporting | Normal | Integration |
 | ServiceAreaArchived | Area and Assignment Management | Timeline, Activity Log, Reporting | Low | Domain |
+| PackageCreated | Service Package Management | Timeline, Activity Log | Low | Domain |
+| PackageActivated | Service Package Management | Subscription Lifecycle, Timeline, Activity Log, Reporting | Low | Domain |
+| PackageDeprecated | Service Package Management | Subscription Lifecycle, Timeline, Activity Log, Reporting | Low | Domain |
+| PackageRetired | Service Package Management | Timeline, Activity Log, Reporting | Low | Domain |
 | SubscriptionActivated | Subscription Lifecycle | Billing, Provisioning, Monitoring, Notification, Timeline, Activity Log, Customer Portal | High | Integration |
 | SubscriptionSuspended | Subscription Lifecycle | Provisioning, Collector, Notification, Timeline, Activity Log, Customer Portal | High | Integration |
 | SubscriptionReactivated | Subscription Lifecycle | Provisioning, Billing, Notification, Timeline, Activity Log, Customer Portal | High | Integration |

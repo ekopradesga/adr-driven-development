@@ -6,6 +6,8 @@ use App\Domain\Events\ClusterActivated;
 use App\Domain\Events\ClusterCreated;
 use App\Domain\Events\ClusterInactivated;
 use App\Enums\ClusterStatus;
+use App\Enums\CustomerStatus;
+use App\Enums\ServiceAreaStatus;
 use App\Models\Cluster;
 use App\Services\AbstractCrudService;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,16 +28,13 @@ class ClusterService extends AbstractCrudService
 
     public function buildCreateData(): array
     {
-        return [
-            'statuses' => ClusterStatus::cases(),
-        ];
+        return [];
     }
 
     public function buildEditData(Cluster $cluster): array
     {
         return [
             'cluster' => $cluster,
-            'statuses' => ClusterStatus::cases(),
         ];
     }
 
@@ -52,7 +51,8 @@ class ClusterService extends AbstractCrudService
             $cluster = Cluster::create([
                 'name' => $data['name'],
                 'code' => $data['code'],
-                'status' => $data['status'] ?? ClusterStatus::Planned->value,
+                // Cluster always starts in Planned state; activation is a separate transition.
+                'status' => ClusterStatus::Planned->value,
                 'description' => $data['description'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
@@ -101,13 +101,13 @@ class ClusterService extends AbstractCrudService
         return DB::transaction(function () use ($cluster) {
             $cluster = Cluster::lockForUpdate()->findOrFail($cluster->id);
 
-            if ($cluster->customers()->exists()) {
+            if ($cluster->customers()->where('status', CustomerStatus::Active->value)->exists()) {
                 throw ValidationException::withMessages([
-                    'cluster' => 'Clusters with assigned customers cannot be inactivated.',
+                    'cluster' => 'Clusters with active customers cannot be inactivated.',
                 ]);
             }
 
-            if ($cluster->serviceAreas()->where('status', 'active')->exists()) {
+            if ($cluster->serviceAreas()->where('status', ServiceAreaStatus::Active->value)->exists()) {
                 throw ValidationException::withMessages([
                     'cluster' => 'Clusters with active service areas cannot be inactivated.',
                 ]);

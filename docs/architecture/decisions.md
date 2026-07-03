@@ -183,6 +183,8 @@ When conflicts occur, follow the Documentation Hierarchy defined in the Architec
 - [Customer Management](#customer-management)
   - [Customer and Subscription Boundaries](#decision-customer-and-subscription-boundaries)
   - [One Active Primary Subscription](#decision-one-active-primary-subscription)
+  - [Package Lifecycle Canonical States](#decision-package-lifecycle-canonical-states)
+  - [Package Permission Namespace and Assignment Rule](#decision-package-permission-namespace-and-assignment-rule)
   - [Cluster and Service Area Model](#decision-cluster-and-service-area-model)
   - [Cluster and Service Area Lifecycle Canonical States](#decision-cluster-and-service-area-lifecycle-canonical-states)
   - [Service Area Assignment and Permission Namespace](#decision-service-area-assignment-and-permission-namespace)
@@ -584,6 +586,42 @@ This matches the current commercial model and simplifies operational control.
 
 #### Impact
 - Simpler provisioning and billing decision logic.
+
+### Decision: Package Lifecycle Canonical States
+
+#### Decision
+The canonical lifecycle states and persisted database values for Service Package Management are:
+
+- `Draft` -> `draft` - Initial/default state; package profile prepared but not assignable.
+- `Active` -> `active` - Package is operationally assignable to subscriptions.
+- `Deprecated` -> `deprecated` - Existing references allowed; new assignment is blocked.
+- `Retired` -> `retired` - Terminal state; no operational assignment allowed.
+
+#### Reason
+The current repository includes only a stub Package model and lacks a canonical lifecycle contract for controllers, policies, and validation. Explicit canonical states are required before implementation to avoid status drift between forms, seeders, and services.
+
+#### Impact
+- `PackageStatus` enum can be implemented without ambiguity.
+- `packages.status` default must be `draft`.
+- New subscription assignment must resolve to `active` packages only.
+- Retirement must enforce active-subscription preconditions.
+
+### Decision: Package Permission Namespace and Assignment Rule
+
+#### Decision
+Service Package Management uses the `package.*` permission namespace and the following assignment governance:
+
+- Package CRUD and lifecycle actions are authorized through `package.view`, `package.create`, `package.update`, `package.activate`, `package.deprecate`, `package.retire`, and `package.export`.
+- Subscription creation and package changes must reference only `active` packages.
+- `Deprecated` and `Retired` packages remain available for historical reporting but must not be assignable.
+
+#### Reason
+Without a canonical permission namespace and assignment rule, implementation may reuse unrelated permission keys and allow invalid package selections during subscription operations.
+
+#### Impact
+- Seeder, policy, and navigation contracts can reference one stable namespace.
+- Subscription request validation and Package service checks can enforce status-aware selection rules consistently.
+- Package lifecycle actions remain service-owned with policy authorization.
 
 ### Decision: Cluster and Service Area Model
 

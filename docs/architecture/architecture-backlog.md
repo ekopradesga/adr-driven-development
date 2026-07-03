@@ -984,6 +984,32 @@ Area and Assignment Management is in project scope, but the repository lacks an 
 
 ---
 
+### ARCH-035
+
+**Title:** Package Module Lifecycle, Workflow, and Event Contract Finalization
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Description:**
+
+Service Package Management is in project scope, but the repository still lacks a finalized implementation boundary for package lifecycle states, workflow transitions, event contracts, and permission namespace. Existing package code remains stub-based and does not have an authoritative column-level schema contract in architecture documentation.
+
+**Recommended Action:**
+
+1. Define canonical package lifecycle states, transition rules, and permission namespace in architecture decisions
+2. Add a dedicated package workflow document with transition guards and cross-module effects
+3. Finalize package entity column contract and package lifecycle business events before code generation
+
+**Resolution (2026-07-03):** `docs/workflows/package-workflow.md` now defines package lifecycle transitions and guards. `docs/architecture/decisions.md` now defines canonical package lifecycle states and `package.*` permission namespace. `docs/database/entities.md` now defines column-level package schema and lifecycle reference. `docs/architecture/business-events.md` now defines package lifecycle business events. `docs/architecture/glossary.md` now includes `Package Status`.
+
+---
+
 # Closed Items
 
 ### ARCH-032
@@ -1034,6 +1060,22 @@ Area and Assignment Management is in project scope, but the repository lacks an 
 
 ---
 
+### ARCH-035
+
+**Title:** Package Module Lifecycle, Workflow, and Event Contract Finalization
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Resolution (2026-07-03):** `docs/workflows/package-workflow.md`, `docs/architecture/decisions.md`, `docs/database/entities.md`, `docs/architecture/business-events.md`, and `docs/architecture/glossary.md` now define package lifecycle states, workflow transitions, permission namespace, event contracts, and column-level schema required for implementation.
+
+---
+
 ## Backlog Summary
 
 **Last Updated:** 2026-07-03
@@ -1043,7 +1085,7 @@ Area and Assignment Management is in project scope, but the repository lacks an 
 | Priority | Count | Open Items | Closed Items |
 |---|---|---|---|
 | **Critical** | 7 | 0 | ARCH-001, ARCH-002, ARCH-003, ARCH-019, ARCH-020, ARCH-026, ARCH-027 |
-| **High** | 17 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025, ARCH-028, ARCH-029, ARCH-032, ARCH-033, ARCH-034 |
+| **High** | 18 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025, ARCH-028, ARCH-029, ARCH-032, ARCH-033, ARCH-034, ARCH-035 |
 | **Medium** | 4 | ARCH-010, ARCH-011, ARCH-013 | ARCH-024 |
 | **Low** | 3 | ARCH-012, ARCH-014, ARCH-015 | — |
 | **Investigation** | 3 | ARCH-016, ARCH-018 | ARCH-017 |
@@ -1052,7 +1094,7 @@ Area and Assignment Management is in project scope, but the repository lacks an 
 
 | Status | Count | Items |
 |---|---|---|
-| **Closed** | 23 | ARCH-001–007, ARCH-017, ARCH-019–029, ARCH-032, ARCH-033, ARCH-034 |
+| **Closed** | 24 | ARCH-001–007, ARCH-017, ARCH-019–029, ARCH-032, ARCH-033, ARCH-034, ARCH-035 |
 | **Todo** | 4 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 |
 | **Open** | 2 | ARCH-016, ARCH-018 |
 | **Deferred** | 6 | ARCH-010, ARCH-011, ARCH-012, ARCH-013, ARCH-014, ARCH-015 |
@@ -1067,6 +1109,7 @@ Area and Assignment Management is in project scope, but the repository lacks an 
 | Payment | ❌ Pre-work completed, implementation blocked | ARCH-030, ARCH-031 |
 | Collector | ✅ Architecture approved | None |
 | Service Area | ✅ Architecture approved | None |
+| Package | ✅ Architecture approved | None |
 
 ---
 

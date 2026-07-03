@@ -1066,6 +1066,41 @@
 
 ---
 
+### 2026-07-03 | Architecture | Sprint 2.6 Pre-Work — Collector Module Blocker Logged
+
+**Summary:** Identified and documented the collector implementation blocker before writing module code. The Collector workflow and business events are documented, but the repository still lacks a finalized column-level schema for `collection_tasks`, `collection_task_invoices`, and the supporting `employees` assignment model. Added a new backlog item to capture the pre-work needed before Collector code generation can proceed safely.
+
+**Files Added:** None
+
+**Files Modified:**
+- docs/architecture/architecture-backlog.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Collector implementation remains blocked until the schema contract is finalized. This prevents inventing task, assignment, or employee fields that are not yet approved by architecture.
+
+**Notes:** No application code was written in this step. Collector implementation should resume after ARCH-032 is resolved.
+
+---
+
+### 2026-07-03 | Architecture | Collector Module Schema Finalization
+
+**Summary:** Closed the remaining Collector architecture blocker by documenting the canonical schema and permission namespace. Updated `entities.md` with column-level definitions for `Employee`, `CollectionTask`, and `CollectionTaskInvoice`; added `Collector Task Data Model and Permission Namespace` to `decisions.md`; added glossary terms for `CollectionTask` and `CollectionTaskInvoice`; and marked ARCH-032 closed in the architecture backlog.
+
+**Files Added:** None
+
+**Files Modified:**
+- docs/architecture/decisions.md
+- docs/architecture/glossary.md
+- docs/database/entities.md
+- docs/architecture/architecture-backlog.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Collector is now architecture-ready for implementation. The module has a canonical `collector.*` permission namespace, finalized collection task and employee schema, and backlog status updated to closed.
+
+**Notes:** Documentation-only change. No application code was added or modified.
+
+---
+
 ### 2026-07-03 | Backend | Sprint 2.2 — Subscription Module Implementation
 
 **Summary:** Implemented the complete Subscription module following the approved architecture and the Customer module as reference implementation. Deleted stub subscriptions migration (2026_07_02_000004) and created full architecture-aligned replacement (2026_07_03_000001) with 18 columns including status ENUM(pending/active/suspended/reactivation_pending/terminated), subscription_type ENUM(primary/addon), suspension_type ENUM(overdue/manual) nullable, all lifecycle timestamps (activated_at, suspended_at, reactivation_requested_at, terminated_at), billing_day, FK constraints for customer/package/onu. Created SubscriptionStatus enum (Pending/Active/Suspended/ReactivationPending/Terminated with label/badgeColor/state checks/values/options) and SubscriptionType enum (Primary/Addon) following project enum conventions. Created six Domain Events all implementing ShouldDispatchAfterCommit: SubscriptionCreated (subscription_id, customer_id), SubscriptionActivated (sub_id, customer_id), SubscriptionSuspended (sub_id, customer_id, suspensionType, reason), SubscriptionReactivationPending (sub_id, customer_id), SubscriptionReactivated (sub_id, customer_id), SubscriptionTerminated (sub_id, customer_id, reason). Replaced stub Subscription model with full implementation: all fillable columns, casts (status→SubscriptionStatus, subscription_type→SubscriptionType, all timestamps→datetime), 3 relationships (customer/package/invoices), 5 scopes (pending/active/suspended/terminated/primary), 9 state checks including isSuspendedOverdue/isSuspendedManual. Created Package stub model. Updated SubscriptionFactory with active/suspended/terminated/reactivationPending states. Created SubscriptionPolicy with before() super-admin bypass and 8 permission checks. Created 4 FormRequests: StoreSubscriptionRequest (customer_id, package_id, type, billing_day), UpdateSubscriptionRequest, SuspendSubscriptionRequest (suspension_type, suspension_reason min 5), TerminateSubscriptionRequest (reason min 10). Created SubscriptionService extending AbstractCrudService with: create() dispatching SubscriptionCreated, update(), delete() with pre-condition validation, activate() with lockForUpdate() one-active-primary enforcement + inline customer conversion (Prospect→Active + CustomerConverted dispatched), suspend() with state validation + lockForUpdate, requestReactivation() (Active→Suspended→ReactivationPending), reactivate() delegating to activate(), terminate() with open-invoice pre-condition check, buildIndexData/buildCreateData/buildEditData/findForShow view builders, applyDefaultRelationships/applyFilters/applyDefaultOrdering hooks. Created SubscriptionResource for JSON API. Created SubscriptionController (orchestration only, 12 actions: index/create/store/show/edit/update/destroy/activate/suspend/requestReactivation/reactivate/terminate). Added 12 subscription routes to web.php (resource + 5 lifecycle POST routes). Registered SubscriptionPolicy in AuthServiceProvider. Added Subscriptions item to AdminLTE navigation. Created 4 Blade views following Customer module patterns: index (table with customer/package/type/status/billing_day/activated_at, search/filter), show (2-column layout with detail card + 4-tab workspace: Overview/Invoices/Timeline/Attachments, suspend/terminate modal forms), create (customer selector, package selector, type, billing_day), edit (package/type/billing_day/notes). Created SubscriptionControllerTest with 17 test methods covering all endpoints, all lifecycle transitions, business rule enforcement (one-active-primary, prospect conversion, open-invoice pre-condition, invalid state transitions). Verified all PHP syntax clean, all 12 routes registered.
@@ -1172,4 +1207,70 @@
 **Architecture Impact:** Payment module architecture is now documentation-complete for service-layer implementation and event-driven integration. Canonical payment statuses and allocation correction semantics are explicit and enforceable, reducing ambiguity in `PaymentService`, `PaymentStatus` enum design, reporting, and downstream consumers (Billing, Subscription Lifecycle, Collector, Notification, Customer Portal). Financial immutability policy is aligned across Invoice and Payment domains with correction-through-reversal semantics. Remaining implementation blockers are now explicit backlog items: replacement of stub migrations `2026_07_02_000007_create_payments_table.php` and `2026_07_02_000008_create_payment_allocations_table.php`.
 
 **Notes:** Documentation-only pre-work. No PHP application code, routes, controllers, services, migrations, or tests were generated in this story.
+
+---
+
+### 2026-07-03 | Backend | Sprint 2.6 — Collector Module Implementation
+
+**Summary:** Implemented the first collector module slice from the now-finalized architecture contract. Added the `Employee`, `CollectionTask`, and `CollectionTaskInvoice` aggregates with supporting enums, migrations, factories, policies, requests, controllers, services, routes, and AdminLTE views. Wired the canonical collector lifecycle operations for assignment, scheduling, route start, customer visit recording, completion, follow-up, cancellation, and invoice targeting/resolution. Added the `CollectorAssigned`, `CollectorVisitStarted`, and `CollectorVisitCompleted` domain events and seeded the new `collector.*` permission namespace into RBAC.
+
+**Files Added:**
+- app/Enums/EmployeeStatus.php
+- app/Enums/CollectionTaskStatus.php
+- app/Enums/CollectionTaskPaymentSubmissionStatus.php
+- app/Enums/CollectionTaskInvoiceStatus.php
+- app/Models/Employee.php
+- app/Models/CollectionTask.php
+- app/Models/CollectionTaskInvoice.php
+- app/Domain/Events/CollectorAssigned.php
+- app/Domain/Events/CollectorVisitStarted.php
+- app/Domain/Events/CollectorVisitCompleted.php
+- app/Services/Collector/EmployeeService.php
+- app/Services/Collector/CollectionTaskService.php
+- app/Policies/EmployeePolicy.php
+- app/Policies/CollectionTaskPolicy.php
+- app/Policies/CollectionTaskInvoicePolicy.php
+- app/Http/Controllers/EmployeeController.php
+- app/Http/Controllers/CollectionTaskController.php
+- app/Http/Requests/Collector/StoreEmployeeRequest.php
+- app/Http/Requests/Collector/UpdateEmployeeRequest.php
+- app/Http/Requests/Collector/StoreCollectionTaskRequest.php
+- app/Http/Requests/Collector/UpdateCollectionTaskRequest.php
+- app/Http/Requests/Collector/AssignCollectionTaskRequest.php
+- app/Http/Requests/Collector/ScheduleCollectionTaskRequest.php
+- app/Http/Requests/Collector/StartCollectionTaskRouteRequest.php
+- app/Http/Requests/Collector/RecordCollectionTaskVisitRequest.php
+- app/Http/Requests/Collector/CompleteCollectionTaskRequest.php
+- app/Http/Requests/Collector/FollowUpCollectionTaskRequest.php
+- app/Http/Requests/Collector/CancelCollectionTaskRequest.php
+- app/Http/Requests/Collector/CreateCollectionTaskInvoiceRequest.php
+- app/Http/Requests/Collector/ResolveCollectionTaskInvoiceRequest.php
+- database/migrations/2026_07_03_000001_create_employees_table.php
+- database/migrations/2026_07_03_000002_create_collection_tasks_table.php
+- database/migrations/2026_07_03_000003_create_collection_task_invoices_table.php
+- database/factories/EmployeeFactory.php
+- database/factories/CollectionTaskFactory.php
+- database/factories/CollectionTaskInvoiceFactory.php
+- resources/views/employees/index.blade.php
+- resources/views/employees/create.blade.php
+- resources/views/employees/edit.blade.php
+- resources/views/employees/show.blade.php
+- resources/views/collection_tasks/index.blade.php
+- resources/views/collection_tasks/create.blade.php
+- resources/views/collection_tasks/edit.blade.php
+- resources/views/collection_tasks/show.blade.php
+- tests/Feature/CollectorModuleTest.php
+
+**Files Modified:**
+- app/Providers/AuthServiceProvider.php
+- app/Services/Collector/CollectionTaskService.php
+- database/seeders/PermissionSeeder.php
+- database/seeders/RolePermissionSeeder.php
+- routes/web.php
+- config/adminlte.php
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Collector is now implemented on the approved `Employee` / `CollectionTask` / `CollectionTaskInvoice` model and the documented `collector.*` permission namespace. The module follows the service-first architecture pattern and emits only the documented collector business events. Payment ownership remains outside Collector; the module records handoff context only.
+
+**Notes:** Static validation passed for all new collector PHP and Blade files. A targeted `php artisan test --filter=CollectorModuleTest` invocation was attempted, but the environment returned no usable test output and an additional route verification command was skipped by user action, so runtime confirmation is still pending.
 

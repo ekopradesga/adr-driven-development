@@ -364,6 +364,22 @@ return [
             'url'  => 'payments',
             'icon' => 'fas fa-fw fa-money-bill-wave',
         ],
+        [
+            'text' => 'Collector',
+            'icon' => 'fas fa-fw fa-truck-moving',
+            'submenu' => [
+                [
+                    'text' => 'Employees',
+                    'url'  => 'employees',
+                    'icon' => 'fas fa-fw fa-id-badge',
+                ],
+                [
+                    'text' => 'Collection Tasks',
+                    'url'  => 'collection-tasks',
+                    'icon' => 'fas fa-fw fa-clipboard-list',
+                ],
+            ],
+        ],
 
         // Account
         ['header' => 'ACCOUNT'],

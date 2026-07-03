@@ -72,6 +72,20 @@ class PermissionSeeder extends Seeder
             ['key' => 'billing.export',   'name' => 'Export Billing Data',  'category' => 'billing'],
 
             // ----------------------------------------------------------------
+            // Collector
+            // ----------------------------------------------------------------
+            ['key' => 'collector.view',     'name' => 'View Collector Work',     'category' => 'collector'],
+            ['key' => 'collector.create',   'name' => 'Create Collector Work',   'category' => 'collector'],
+            ['key' => 'collector.update',   'name' => 'Update Collector Work',   'category' => 'collector'],
+            ['key' => 'collector.assign',   'name' => 'Assign Collector Work',   'category' => 'collector'],
+            ['key' => 'collector.schedule', 'name' => 'Schedule Collector Work', 'category' => 'collector'],
+            ['key' => 'collector.route',    'name' => 'Start Collector Route',   'category' => 'collector'],
+            ['key' => 'collector.visit',    'name' => 'Record Collector Visit',  'category' => 'collector'],
+            ['key' => 'collector.complete', 'name' => 'Complete Collector Work', 'category' => 'collector'],
+            ['key' => 'collector.cancel',   'name' => 'Cancel Collector Work',   'category' => 'collector'],
+            ['key' => 'collector.export',   'name' => 'Export Collector Work',   'category' => 'collector'],
+
+            // ----------------------------------------------------------------
             // Payments
             // ----------------------------------------------------------------
             ['key' => 'payment.view',     'name' => 'View Payments',         'category' => 'payment'],

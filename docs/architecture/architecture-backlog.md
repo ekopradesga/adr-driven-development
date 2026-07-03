@@ -906,9 +906,47 @@ The subscriptions migration (`2026_07_02_000004_create_subscriptions_table.php`)
 
 ---
 
+### ARCH-032
+
+**Title:** Collector Module CollectionTask and Employee Schema Finalization
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Description:**
+
+The Collector workflow is documented, but the repository does not yet contain a finalized column-level schema for the `collection_tasks` aggregate or its `employees` ownership model. `entities.md` defines relationships and business rules, but the implementation boundary still needs a canonical migration contract before code generation can proceed without inventing fields.
+
+**Recommended Action:**
+
+1. Define the exact `collection_tasks` and `collection_task_invoices` column sets, lifecycle metadata, and foreign key strategy
+2. Finalize the `employees` support table and assignment linkage used by Collector tasks
+3. Confirm the permission key namespace for Collector actions before controller and policy generation
+
+**Resolution (2026-07-03):** `docs/database/entities.md` now defines canonical column-level schemas for `Employee`, `CollectionTask`, and `CollectionTaskInvoice`, including lifecycle fields and FK strategy. `docs/architecture/decisions.md` now defines the `collector.*` permission namespace and collector ownership rules. `docs/architecture/glossary.md` now includes `CollectionTask` and `CollectionTaskInvoice` terms.
+
+---
+
 # Closed Items
 
-*No items closed yet. Items are moved here when fully resolved with documentation updated.*
+### ARCH-032
+
+**Title:** Collector Module CollectionTask and Employee Schema Finalization
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Resolution (2026-07-03):** `docs/database/entities.md` now defines canonical column-level schemas for `Employee`, `CollectionTask`, and `CollectionTaskInvoice`, including lifecycle fields and FK strategy. `docs/architecture/decisions.md` now defines the `collector.*` permission namespace and collector ownership rules. `docs/architecture/glossary.md` now includes `CollectionTask` and `CollectionTaskInvoice` terms.
 
 ---
 
@@ -921,7 +959,7 @@ The subscriptions migration (`2026_07_02_000004_create_subscriptions_table.php`)
 | Priority | Count | Open Items | Closed Items |
 |---|---|---|---|
 | **Critical** | 7 | 0 | ARCH-001, ARCH-002, ARCH-003, ARCH-019, ARCH-020, ARCH-026, ARCH-027 |
-| **High** | 14 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025, ARCH-028, ARCH-029 |
+| **High** | 15 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025, ARCH-028, ARCH-029, ARCH-032 |
 | **Medium** | 4 | ARCH-010, ARCH-011, ARCH-013 | ARCH-024 |
 | **Low** | 3 | ARCH-012, ARCH-014, ARCH-015 | — |
 | **Investigation** | 3 | ARCH-016, ARCH-018 | ARCH-017 |
@@ -930,7 +968,7 @@ The subscriptions migration (`2026_07_02_000004_create_subscriptions_table.php`)
 
 | Status | Count | Items |
 |---|---|---|
-| **Closed** | 20 | ARCH-001–007, ARCH-017, ARCH-019–029 |
+| **Closed** | 21 | ARCH-001–007, ARCH-017, ARCH-019–029, ARCH-032 |
 | **Todo** | 4 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 |
 | **Open** | 2 | ARCH-016, ARCH-018 |
 | **Deferred** | 6 | ARCH-010, ARCH-011, ARCH-012, ARCH-013, ARCH-014, ARCH-015 |
@@ -943,6 +981,7 @@ The subscriptions migration (`2026_07_02_000004_create_subscriptions_table.php`)
 | Customer | ✅ Implemented | None |
 | Subscription | ✅ Architecture approved | None (ARCH-019–025 all closed) |
 | Payment | ❌ Pre-work completed, implementation blocked | ARCH-030, ARCH-031 |
+| Collector | ✅ Architecture approved | None |
 
 ---
 

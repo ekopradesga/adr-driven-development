@@ -454,10 +454,27 @@ Active -> Inactive -> Archived.
 
 Deletion behavior: Soft Delete with Restrict if linked to audit or financial approvals.
 
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `user_id` | BIGINT UNSIGNED | Yes | FK → users.id (SET NULL). Links the employee profile to the authenticated user account. |
+| `name` | VARCHAR(255) | No | Full employee display name |
+| `email` | VARCHAR(255) | Yes | Work email address |
+| `phone` | VARCHAR(30) | Yes | Contact phone number |
+| `status` | ENUM | No | `active` (default), `inactive`, `archived` |
+| `notes` | TEXT | Yes | Internal operational notes |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+| `deleted_at` | TIMESTAMP | Yes | Soft delete |
+
 ### Relationships
+- Employee 0..1 -> 1 User
 - Employee 1 -> N Ticket
 - Employee 1 -> N WorkOrder
 - Employee N -> N ServiceArea
+- Employee 1 -> N CollectionTask
 - Employee 1 -> N UserSession through User
 - Employee 1 -> N ActivityLog through User
 
@@ -1552,6 +1569,28 @@ Waiting Assignment -> Assigned -> Scheduled -> On Route -> Customer Visited -> C
 
 Deletion behavior: Soft Delete; Archive after closure.
 
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `customer_id` | BIGINT UNSIGNED | No | FK → customers.id (RESTRICT) |
+| `employee_id` | BIGINT UNSIGNED | Yes | FK → employees.id (RESTRICT). Assigned collector; NULL while waiting assignment. |
+| `status` | ENUM | No | `waiting_assignment`, `assigned`, `scheduled`, `on_route`, `customer_visited`, `completed`, `follow_up_required`, `cancelled` |
+| `scheduled_for` | TIMESTAMP | Yes | Planned field visit time |
+| `route_started_at` | TIMESTAMP | Yes | When route execution started |
+| `visited_at` | TIMESTAMP | Yes | When the customer visit was recorded |
+| `completed_at` | TIMESTAMP | Yes | When the task reached a terminal outcome |
+| `follow_up_reason` | TEXT | Yes | Required when status becomes `follow_up_required` |
+| `cancellation_reason` | TEXT | Yes | Required when status becomes `cancelled` |
+| `payment_collected_amount` | DECIMAL(12,2) | Yes | Collection context amount captured during the visit; handoff only |
+| `payment_submission_reference` | VARCHAR(100) | Yes | Reference passed to Payment Workflow |
+| `payment_submission_status` | ENUM | Yes | `pending`, `submitted`, `acknowledged`, `failed` |
+| `notes` | TEXT | Yes | Internal notes |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+| `deleted_at` | TIMESTAMP | Yes | Soft delete |
+
 ### Relationships
 - Customer 1 -> N CollectionTask
 - Employee N -> 1 CollectionTask
@@ -1614,6 +1653,23 @@ Collector
 Created -> Resolved -> Cancelled.
 
 Deletion behavior: Soft Delete.
+
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `collection_task_id` | BIGINT UNSIGNED | No | FK → collection_tasks.id (CASCADE) |
+| `invoice_id` | BIGINT UNSIGNED | No | FK → invoices.id (RESTRICT) |
+| `status` | ENUM | No | `created`, `resolved`, `cancelled` |
+| `inclusion_reason` | TEXT | Yes | Why the invoice was included in the visit |
+| `resolution_outcome` | VARCHAR(100) | Yes | Outcome recorded for this invoice within the task |
+| `resolved_at` | TIMESTAMP | Yes | When the invoice outcome was resolved |
+| `cancelled_at` | TIMESTAMP | Yes | When the join row was cancelled |
+| `notes` | TEXT | Yes | Internal notes |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+| `deleted_at` | TIMESTAMP | Yes | Soft delete |
 
 ### Relationships
 - CollectionTask 1 -> N CollectionTaskInvoice

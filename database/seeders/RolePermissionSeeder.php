@@ -136,7 +136,7 @@ class RolePermissionSeeder extends Seeder
             'customer.view',
             'subscription.view',
             'billing.view',
-            'payment.view', 'payment.create', 'payment.allocate',
+            'collector.view', 'collector.create', 'collector.update', 'collector.assign', 'collector.schedule', 'collector.route', 'collector.visit', 'collector.complete', 'collector.cancel',
         ]));
 
         // ---------------------------------------------------------------------

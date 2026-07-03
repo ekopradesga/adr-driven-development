@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\CollectionTaskController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentAllocationController;
@@ -67,6 +69,22 @@ Route::middleware('auth')->group(function () {
     Route::post('customers/{customer}/suspend',    [CustomerController::class, 'suspend'])->name('customers.suspend');
     Route::post('customers/{customer}/reactivate', [CustomerController::class, 'reactivate'])->name('customers.reactivate');
     Route::post('customers/{customer}/terminate',  [CustomerController::class, 'terminate'])->name('customers.terminate');
+
+    // -------------------------------------------------------------------------
+    // Collector / Field Collections
+    // -------------------------------------------------------------------------
+    Route::resource('employees', EmployeeController::class);
+
+    Route::resource('collection-tasks', CollectionTaskController::class);
+    Route::post('collection-tasks/{collection_task}/assign', [CollectionTaskController::class, 'assign'])->name('collection-tasks.assign');
+    Route::post('collection-tasks/{collection_task}/schedule', [CollectionTaskController::class, 'schedule'])->name('collection-tasks.schedule');
+    Route::post('collection-tasks/{collection_task}/start-route', [CollectionTaskController::class, 'startRoute'])->name('collection-tasks.start-route');
+    Route::post('collection-tasks/{collection_task}/record-visit', [CollectionTaskController::class, 'recordVisit'])->name('collection-tasks.record-visit');
+    Route::post('collection-tasks/{collection_task}/complete', [CollectionTaskController::class, 'complete'])->name('collection-tasks.complete');
+    Route::post('collection-tasks/{collection_task}/follow-up-required', [CollectionTaskController::class, 'followUpRequired'])->name('collection-tasks.follow-up-required');
+    Route::post('collection-tasks/{collection_task}/cancel', [CollectionTaskController::class, 'cancel'])->name('collection-tasks.cancel');
+    Route::post('collection-tasks/{collection_task}/invoices', [CollectionTaskController::class, 'storeInvoice'])->name('collection-tasks.invoices.store');
+    Route::post('collection-tasks/{collection_task}/invoices/{collection_task_invoice}/resolve', [CollectionTaskController::class, 'resolveInvoice'])->name('collection-tasks.invoices.resolve');
 
     // -------------------------------------------------------------------------
     // User Management

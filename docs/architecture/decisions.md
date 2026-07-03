@@ -267,6 +267,7 @@ When conflicts occur, follow the Documentation Hierarchy defined in the Architec
 - [Workflows](#workflows)
   - [Workflow Classification](#decision-workflow-classification)
   - [Customer and Employee Workflow Separation](#decision-customer-and-employee-workflow-separation)
+  - [Collector Task Data Model and Permission Namespace](#decision-collector-task-data-model-and-permission-namespace)
 - [Future Considerations](#future-considerations)
   - [Conflict Resolution and Superseded Decisions](#decision-conflict-resolution-and-superseded-decisions)
   - [Native Mobile Clients](#decision-native-mobile-clients)
@@ -1645,6 +1646,24 @@ User capability and risk boundaries differ by actor type.
 
 #### Impact
 - Safer self-service and clearer internal controls.
+
+### Decision: Collector Task Data Model and Permission Namespace
+
+#### Decision
+Collector workflows use the following canonical ownership and permission rules:
+
+- `Employee` is the internal personnel profile for collector operations and links to `users.id` through a nullable `user_id` FK.
+- `CollectionTask` owns the assignment and field-visit state for a single collectible customer task and links to exactly one assigned `employee_id` once the task leaves waiting-assignment.
+- `CollectionTaskInvoice` is the join entity between a collection task and the invoices targeted by that visit.
+- Collector permissions use the `collector.*` namespace for all collector-facing actions.
+
+#### Reason
+Collector implementation needs a stable schema contract and permission namespace before controllers, policies, and services are generated.
+
+#### Impact
+- `employees` can be implemented as a first-class core entity with a nullable user linkage for authenticated staff.
+- `collection_tasks` and `collection_task_invoices` can be implemented without inventing field names during code generation.
+- `collector.*` permission keys can be seeded consistently and referenced by policies and controllers.
 
 # Future Considerations
 

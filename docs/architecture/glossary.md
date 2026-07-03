@@ -79,6 +79,33 @@ Collector workflows are mobile-first and commonly use customer QR lookup.
 - Service Area
 - Cluster
 
+## CollectionTask
+
+### Definition
+A field collection assignment owned by a customer and executed by a collector.
+
+### Notes
+Collection tasks track assignment, scheduling, visit execution, follow-up, and payment handoff context without owning invoices or payments.
+
+### Related Terms
+- Collector
+- Customer
+- CollectionTaskInvoice
+- Payment
+
+## CollectionTaskInvoice
+
+### Definition
+A join record linking a collection task to a targeted invoice for a specific visit attempt.
+
+### Notes
+The same invoice may appear in multiple collection tasks over time.
+
+### Related Terms
+- CollectionTask
+- Invoice
+- Collector
+
 ## Technician
 
 ### Definition

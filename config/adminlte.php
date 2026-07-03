@@ -362,6 +362,11 @@ return [
             'icon' => 'fas fa-fw fa-network-wired',
         ],
         [
+            'text' => 'Routers',
+            'url'  => 'routers',
+            'icon' => 'fas fa-fw fa-route',
+        ],
+        [
             'text' => 'FATs',
             'url'  => 'fats',
             'icon' => 'fas fa-fw fa-project-diagram',

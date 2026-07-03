@@ -722,6 +722,38 @@ OLT Status is distinct from monitoring health states such as Healthy, Warning, C
 - Monitoring
 - ONU
 
+## Router
+
+### Definition
+Network topology router asset used in provisioning and monitoring hierarchies.
+
+### Notes
+Router is managed as a first-class infrastructure asset. Core routers may parent distribution routers for topology propagation and operational scoping.
+
+### Related Terms
+- Router Status
+- OLT
+- Monitoring
+
+## Router Status
+
+### Definition
+The lifecycle state of a `Router` asset record. Expressed as the `routers.status` column and the `RouterStatus` PHP backed enum.
+
+### Notes
+The four canonical states are:
+- **Planned** (`planned`) - registered but not operationally assignable. Default.
+- **Active** (`active`) - assignable for topology and provisioning use.
+- **Maintenance** (`maintenance`) - temporarily unavailable for new operational assignment.
+- **Retired** (`retired`) - terminal historical state.
+
+Router Status is distinct from monitoring health states such as Healthy, Warning, Critical, Unknown, or Maintenance in the monitoring workflow.
+
+### Related Terms
+- Router
+- Monitoring
+- OLT
+
 ## ODF
 
 ### Definition
@@ -1824,6 +1856,19 @@ Access network head-end device.
 - ONU
 - ONT
 - PON
+
+## Router
+
+### Definition
+Managed network routing asset used in topology and provisioning.
+
+### Notes
+Router is a first-class infrastructure term; core and distribution roles are handled by the Router model and workflow.
+
+### Related Terms
+- Router Status
+- OLT
+- Monitoring
 
 ## ODF
 

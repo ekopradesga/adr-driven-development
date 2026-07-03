@@ -223,6 +223,213 @@ Automatic topology onboarding checklist.
 
 ---
 
+## RouterCreated
+
+### Event Name
+`RouterCreated`
+
+### Description
+A new Router asset record has been registered in planned state.
+
+### Category
+Domain Event
+
+### Producer
+Router Management
+
+### Consumers
+- Timeline
+- Activity Log
+
+### Trigger
+An authorized actor creates a new Router asset record.
+
+### Business Meaning
+The platform has a new Router asset available for staged operational preparation.
+
+### Related Workflow
+Router Workflow - Planned state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+No.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Router identity, actor, and creation timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+AI-driven network expansion planning.
+
+## RouterActivated
+
+### Event Name
+`RouterActivated`
+
+### Description
+A Router asset record has transitioned into active state.
+
+### Category
+Domain Event
+
+### Producer
+Router Management
+
+### Consumers
+- Timeline
+- Activity Log
+- Provisioning Workflow
+
+### Trigger
+An authorized actor activates a Router asset.
+
+### Business Meaning
+The Router is available for topology and provisioning assignment.
+
+### Related Workflow
+Router Workflow - Active state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+No.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Router identity, actor, and activation timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automatic downstream topology validation.
+
+## RouterMaintenanceStarted
+
+### Event Name
+`RouterMaintenanceStarted`
+
+### Description
+A Router asset record has entered maintenance state.
+
+### Category
+Domain Event
+
+### Producer
+Router Management
+
+### Consumers
+- Timeline
+- Activity Log
+- Monitoring Workflow
+
+### Trigger
+An authorized actor marks a Router for maintenance.
+
+### Business Meaning
+The Router is temporarily unavailable for new topology assignment.
+
+### Related Workflow
+Router Workflow - Maintenance state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+No.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Router identity, actor, and maintenance timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Maintenance window correlation.
+
+## RouterRetired
+
+### Event Name
+`RouterRetired`
+
+### Description
+A Router asset record has been retired from operational use.
+
+### Category
+Domain Event
+
+### Producer
+Router Management
+
+### Consumers
+- Timeline
+- Activity Log
+- Monitoring Workflow
+
+### Trigger
+An authorized actor retires a Router asset.
+
+### Business Meaning
+The Router is permanently removed from operational assignment.
+
+### Related Workflow
+Router Workflow - Retired state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+No.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Router identity, actor, and retirement timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Historical topology analytics.
+
 ## OltActivated
 
 ### Event Name

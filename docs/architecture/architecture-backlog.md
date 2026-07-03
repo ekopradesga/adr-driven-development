@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Status:** Living Document  
-**Last Updated:** 2026-07-02  
+**Last Updated:** 2026-07-04
 **Owner:** Architecture Team
 
 ---
@@ -57,6 +57,7 @@ The Architecture Backlog is **not** a dumping ground. Every item has a clear own
 - [Epic D — Technical Investigations](#epic-d--technical-investigations)
 - [Epic E — Subscription Architecture Finalization](#epic-e--subscription-architecture-finalization)
 - [Epic F — Payment Architecture Finalization](#epic-f--payment-architecture-finalization)
+- [Epic G — Router Architecture Finalization](#epic-g--router-architecture-finalization)
 - [Closed Items](#closed-items)
 
 ---
@@ -1059,6 +1060,32 @@ FAT Management is in project scope, but the repository lacks an authoritative im
 3. Finalize ODF/FAT column contracts and the FAT-to-ONU distribution scope reference before module generation
 
 **Resolution (2026-07-03):** `docs/workflows/fat-workflow.md` now defines FAT lifecycle transitions and downstream reachability rules. `docs/architecture/decisions.md` now defines canonical FAT lifecycle states and `fat.*` permission namespace. `docs/database/entities.md` now defines implementation-grade ODF/FAT schemas and the optional ONU `fat_id` mapping used for downstream reachability aggregation. `docs/database/erd.md` now includes the FAT-to-ONU scope reference. `docs/architecture/business-events.md` now defines FAT lifecycle business events. `docs/architecture/glossary.md` now includes `FAT Status`.
+
+---
+
+# Epic G — Router Architecture Finalization
+
+**Scope:** Items that must be completed before Router module implementation begins.
+**Target Version:** v1.0
+**Priority:** Critical / High
+
+---
+
+### ARCH-038
+
+**Title:** Router Asset Lifecycle, Hierarchy, and Permission Namespace
+
+**Priority:** Critical
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** Yes
+
+**Source Findings:** Router scope review from Sprint 3.6 Wire Network Router Module
+
+**Resolution (2026-07-04):** `docs/architecture/decisions.md` now defines canonical Router lifecycle states and the `router.*` permission namespace. `docs/workflows/router-workflow.md` defines Router lifecycle transitions and hierarchy rules. `docs/database/entities.md` now defines the Router schema and self-referential topology contract. `docs/database/erd.md` now includes Router hierarchy ownership. `docs/architecture/business-events.md` now defines Router lifecycle business events. `docs/architecture/glossary.md` now includes `Router` and `Router Status`.
 
 ---
 

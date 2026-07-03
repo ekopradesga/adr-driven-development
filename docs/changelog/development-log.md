@@ -1580,3 +1580,69 @@
 
 **Notes:** Static validation passed (`get_errors` found no errors in touched files and dependencies). A targeted `php artisan test --filter=FatModuleTest` run was attempted, but this environment returned no output, so runtime confirmation remains pending.
 
+---
+
+### 2026-07-04 | Architecture | Sprint 3.6 Pre-Work — Wire Network Router Module Architecture Finalization
+
+**Summary:** Closed the Wire Network Router Module architecture blocker before implementation by formalizing Router lifecycle governance, hierarchy rules, permission namespace, event contract, and workflow boundaries. Added canonical Router lifecycle decisions and `router.*` permission namespace governance, created a dedicated Router workflow document, expanded network entity documentation with Router schema and self-referential topology, expanded business events with Router lifecycle events, and recorded/closed ARCH-038 in the architecture backlog.
+
+**Files Added:**
+- docs/workflows/router-workflow.md
+
+**Files Modified:**
+- docs/architecture/decisions.md
+- docs/architecture/glossary.md
+- docs/database/entities.md
+- docs/database/erd.md
+- docs/architecture/business-events.md
+- docs/architecture/architecture-backlog.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Router Management is now implementation-ready with explicit lifecycle states (`planned`, `active`, `maintenance`, `retired`), self-referential topology hierarchy for core/distribution assets, permission namespace governance, event contracts, and schema-level constraints aligned across architecture documents.
+
+**Notes:** Documentation-only pre-work. No runtime code execution performed in this step.
+
+---
+
+### 2026-07-04 | Backend | Sprint 3.6 — Wire Network Router Module Implementation
+
+**Summary:** Implemented the complete Wire Network Router Module following the finalized architecture contract. Added Router status/type enums, Router model, Router lifecycle service, policy, controller, form requests, migration, factory, Blade index/create/edit/show pages, feature test, route registration, policy registration, AdminLTE navigation integration, and Router RBAC permissions/role assignments. Router lifecycle operations now follow the service-first pattern and emit RouterCreated, RouterActivated, RouterMaintenanceStarted, and RouterRetired events after commit.
+
+**Files Added:**
+- app/Enums/RouterStatus.php
+- app/Enums/RouterType.php
+- app/Domain/Events/RouterCreated.php
+- app/Domain/Events/RouterActivated.php
+- app/Domain/Events/RouterMaintenanceStarted.php
+- app/Domain/Events/RouterRetired.php
+- app/Models/Router.php
+- app/Policies/RouterPolicy.php
+- app/Services/Network/RouterService.php
+- app/Http/Controllers/RouterController.php
+- app/Http/Requests/Router/StoreRouterRequest.php
+- app/Http/Requests/Router/UpdateRouterRequest.php
+- app/Http/Requests/Router/ActivateRouterRequest.php
+- app/Http/Requests/Router/MaintenanceRouterRequest.php
+- app/Http/Requests/Router/RetireRouterRequest.php
+- database/migrations/2026_07_04_000001_create_routers_table.php
+- database/factories/RouterFactory.php
+- resources/views/routers/index.blade.php
+- resources/views/routers/create.blade.php
+- resources/views/routers/edit.blade.php
+- resources/views/routers/show.blade.php
+- resources/views/routers/partials/form.blade.php
+- tests/Feature/RouterModuleTest.php
+
+**Files Modified:**
+- app/Providers/AuthServiceProvider.php
+- routes/web.php
+- config/adminlte.php
+- database/seeders/PermissionSeeder.php
+- database/seeders/RolePermissionSeeder.php
+- docs/database/erd.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Router lifecycle is now service-owned and policy-protected with canonical asset lifecycle values separated from monitoring health states. Router status checks, parent topology validation, and lifecycle transitions are implemented consistently with the new Router workflow and permission namespace.
+
+**Notes:** Static validation passed (`get_errors` found no errors in touched files and dependencies). A targeted `php artisan test --filter=RouterModuleTest` run was attempted, but this environment returned no output, so runtime confirmation remains pending.
+

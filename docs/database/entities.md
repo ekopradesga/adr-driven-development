@@ -2063,6 +2063,98 @@ Yes
 ### Classification
 Infrastructure
 
+## Router
+
+### Purpose
+Managed network routing asset used for core and distribution topology governance.
+
+### Owner Module
+Monitoring & Network
+
+### Lifecycle
+Planned -> Active -> Maintenance -> Retired.
+
+Deletion behavior: Soft Delete when detached; Restrict with active child topology dependencies.
+
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `router_code` | VARCHAR(50) | No | Unique operational router code |
+| `name` | VARCHAR(255) | No | Display name |
+| `router_type` | ENUM | No | `core` or `distribution` |
+| `vendor` | VARCHAR(100) | Yes | Vendor identity |
+| `model` | VARCHAR(100) | Yes | Device model |
+| `ip_address` | VARCHAR(45) | No | Unique management IP |
+| `snmp_community` | VARCHAR(255) | Yes | Optional SNMP access profile reference/value |
+| `api_username` | VARCHAR(100) | Yes | Optional integration username |
+| `api_password` | VARCHAR(255) | Yes | Optional integration secret reference/value |
+| `location_name` | VARCHAR(255) | Yes | Human-readable location |
+| `latitude` | DECIMAL(10,7) | Yes | Geo coordinate |
+| `longitude` | DECIMAL(11,7) | Yes | Geo coordinate |
+| `parent_router_id` | BIGINT UNSIGNED | Yes | FK -> routers.id (SET NULL) |
+| `status` | ENUM | No | `planned` (default), `active`, `maintenance`, `retired` |
+| `last_seen_at` | TIMESTAMP | Yes | Last observed connectivity timestamp |
+| `created_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `updated_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `deleted_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+| `deleted_at` | TIMESTAMP | Yes | Soft delete |
+
+### Relationships
+- Router 1 -> N Router (hierarchy via `parent_router_id`)
+- Router 1 -> N MonitoringEvent
+
+### Key Attributes
+Router code, routing role, operational status, parent topology reference, location context.
+
+### Business Rules
+Participates in logical and physical topology models.
+
+Only `active` Router assets may receive new provisioning assignment or topology attachment.
+
+Monitoring health states must not be stored as Router lifecycle values.
+
+Retirement requires no active child router dependencies.
+
+### Notes
+Operational health should be abstracted for end users.
+
+### Owner
+None. Router is an Aggregate Root of the network topology.
+
+### Aggregate Root
+Yes
+
+### Classification
+Infrastructure
+
+### Lifecycle Reference
+docs/workflows/router-workflow.md
+
+### Immutability
+Mutable
+
+### Soft Delete
+Yes
+
+### Shared Platform Features
+- Timeline: Yes
+- Activity Log: Yes
+- Attachment: No
+- Global Search: Yes
+
+### Produces Events
+- RouterCreated
+- RouterActivated
+- RouterMaintenanceStarted
+- RouterRetired
+
+### Consumes Events
+None
+
 ### Lifecycle Reference
 docs/workflows/olt-workflow.md
 docs/workflows/network-monitoring-workflow.md

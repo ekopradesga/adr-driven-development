@@ -221,6 +221,8 @@ When conflicts occur, follow the Documentation Hierarchy defined in the Architec
 - [Monitoring & Network](#monitoring--network)
   - [OLT Lifecycle Canonical States](#decision-olt-lifecycle-canonical-states)
   - [OLT Permission Namespace and Assignment Rule](#decision-olt-permission-namespace-and-assignment-rule)
+  - [Router Asset Lifecycle Canonical States](#decision-router-asset-lifecycle-canonical-states)
+  - [Router Permission Namespace and Hierarchy Rule](#decision-router-permission-namespace-and-hierarchy-rule)
   - [FAT Lifecycle Canonical States](#decision-fat-lifecycle-canonical-states)
   - [FAT Permission Namespace and Downstream Reachability Rule](#decision-fat-permission-namespace-and-downstream-reachability-rule)
   - [Logical and Physical Topology Separation](#decision-logical-and-physical-topology-separation)
@@ -1246,6 +1248,46 @@ Without a canonical permission namespace and assignment rule, implementation may
 - Policies, seeders, and navigation can reference one stable OLT namespace.
 - Provisioning and topology services can enforce status-aware OLT selection consistently.
 - OLT lifecycle transitions remain service-owned and auditable.
+
+### Decision: Router Asset Lifecycle Canonical States
+
+#### Decision
+The canonical lifecycle states and persisted database values for Router Management are:
+
+- `Planned` -> `planned` - Initial/default state; asset registered but not operationally assignable.
+- `Active` -> `active` - Asset is operationally assignable for topology and provisioning.
+- `Maintenance` -> `maintenance` - Temporarily unavailable for new operational assignment under maintenance context.
+- `Retired` -> `retired` - Terminal historical state; not operationally assignable.
+
+Monitoring health states such as healthy, warning, critical, unknown, and maintenance are separate runtime observations and must not replace the Router lifecycle contract.
+
+#### Reason
+The repository already treats routers as first-class topology assets in provisioning and monitoring documentation, but no canonical lifecycle contract exists for implementation. Canonicalization is required before Router enums, migrations, policies, and provisioning validation can be implemented consistently.
+
+#### Impact
+- `RouterStatus` enum can be implemented without ambiguity.
+- `routers.status` default must be `planned`.
+- Provisioning assignment and network attachment must resolve to `active` Router assets only.
+- Monitoring health remains outside the Router asset lifecycle.
+
+### Decision: Router Permission Namespace and Hierarchy Rule
+
+#### Decision
+Router Management uses the `router.*` permission namespace and the following assignment governance:
+
+- Router CRUD and lifecycle actions are authorized through `router.view`, `router.create`, `router.update`, `router.delete`, `router.activate`, `router.maintenance`, `router.retire`, and `router.export`.
+- Only `active` Router assets may receive new operational topology attachment or provisioning assignment.
+- `maintenance` and `retired` Router assets remain historically visible but must not be used for new provisioning allocation.
+- Core routers may parent distribution routers; distribution routers may reference one parent core router for hierarchy and monitoring propagation.
+
+#### Reason
+Without a canonical permission namespace and hierarchy rule, implementation may either overload broad `network.*` permissions or allow provisioning actions against non-operational assets while leaving router topology ambiguous.
+
+#### Impact
+- Policies, seeders, and navigation can reference one stable Router namespace.
+- Provisioning and monitoring services can enforce status-aware Router selection consistently.
+- Router lifecycle transitions remain service-owned and auditable.
+- Router hierarchy can be represented as a self-referential topology contract in the data model.
 
 ### Decision: FAT Lifecycle Canonical States
 

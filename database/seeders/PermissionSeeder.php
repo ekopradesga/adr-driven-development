@@ -85,6 +85,18 @@ class PermissionSeeder extends Seeder
             ['key' => 'olt.export',      'name' => 'Export OLT Data',              'category' => 'olt'],
 
             // ----------------------------------------------------------------
+            // Router Management
+            // ----------------------------------------------------------------
+            ['key' => 'router.view',        'name' => 'View Router Assets',              'category' => 'router'],
+            ['key' => 'router.create',      'name' => 'Create Router Assets',            'category' => 'router'],
+            ['key' => 'router.update',      'name' => 'Update Router Assets',            'category' => 'router'],
+            ['key' => 'router.delete',      'name' => 'Delete Router Assets',            'category' => 'router'],
+            ['key' => 'router.activate',    'name' => 'Activate Router Assets',          'category' => 'router'],
+            ['key' => 'router.maintenance', 'name' => 'Move Router Assets to Maintenance','category' => 'router'],
+            ['key' => 'router.retire',      'name' => 'Retire Router Assets',            'category' => 'router'],
+            ['key' => 'router.export',      'name' => 'Export Router Data',              'category' => 'router'],
+
+            // ----------------------------------------------------------------
             // FAT Management
             // ----------------------------------------------------------------
             ['key' => 'fat.view',        'name' => 'View FAT Assets',               'category' => 'fat'],

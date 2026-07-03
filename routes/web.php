@@ -7,6 +7,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FatController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\OltController;
+use App\Http\Controllers\WireRouterController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentAllocationController;
@@ -63,6 +64,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('subscriptions', SubscriptionController::class);
     Route::resource('packages', PackageController::class);
     Route::resource('olts', OltController::class);
+    Route::resource('routers', WireRouterController::class);
     Route::resource('fats', FatController::class);
     Route::post('packages/{package}/activate', [PackageController::class, 'activate'])->name('packages.activate');
     Route::post('packages/{package}/deprecate', [PackageController::class, 'deprecate'])->name('packages.deprecate');
@@ -70,6 +72,9 @@ Route::middleware('auth')->group(function () {
     Route::post('olts/{olt}/activate', [OltController::class, 'activate'])->name('olts.activate');
     Route::post('olts/{olt}/maintenance', [OltController::class, 'maintenance'])->name('olts.maintenance');
     Route::post('olts/{olt}/retire', [OltController::class, 'retire'])->name('olts.retire');
+    Route::post('routers/{router}/activate', [WireRouterController::class, 'activate'])->name('routers.activate');
+    Route::post('routers/{router}/maintenance', [WireRouterController::class, 'maintenance'])->name('routers.maintenance');
+    Route::post('routers/{router}/retire', [WireRouterController::class, 'retire'])->name('routers.retire');
     Route::post('fats/{fat}/activate', [FatController::class, 'activate'])->name('fats.activate');
     Route::post('fats/{fat}/maintenance', [FatController::class, 'maintenance'])->name('fats.maintenance');
     Route::post('fats/{fat}/retire', [FatController::class, 'retire'])->name('fats.retire');

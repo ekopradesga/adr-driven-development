@@ -311,6 +311,7 @@ erDiagram
 
 ```mermaid
 erDiagram
+    ROUTER ||--o{ ROUTER : parents
     OLT ||--o{ ODF : feeds
     ODF ||--o{ FAT : distributes
     FAT ||--o{ DROPCORE : extends
@@ -334,6 +335,7 @@ erDiagram
 ```
 
 ## Relationship Explanations
+- Router (1) -> (N) Router (hierarchy via `parent_router_id`)
 - OLT (1) -> (N) ODF
 - ODF (1) -> (N) FAT
 - FAT (1) -> (N) Dropcore
@@ -353,6 +355,7 @@ erDiagram
 - MaintenanceWindow (N) -> (N) monitored assets via scope definition
 
 ## Ownership Rules
+- Router belongs to itself as a self-referential topology aggregate.
 - ODF belongs to OLT.
 - FAT belongs to ODF.
 - Dropcore belongs to FAT.

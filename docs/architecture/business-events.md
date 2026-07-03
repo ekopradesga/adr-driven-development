@@ -170,6 +170,223 @@ AI-driven onboarding workflow initiation.
 
 ---
 
+## OltCreated
+
+### Event Name
+`OltCreated`
+
+### Description
+A new OLT asset record has been registered in planned state.
+
+### Category
+Domain Event
+
+### Producer
+OLT Management
+
+### Consumers
+- Timeline
+- Activity Log
+
+### Trigger
+An authorized actor creates a new OLT asset record.
+
+### Business Meaning
+The platform has a new OLT asset available for staged operational preparation.
+
+### Related Workflow
+OLT Workflow - Planned state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+No.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+OLT identity, actor, and creation timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automatic topology onboarding checklist.
+
+---
+
+## OltActivated
+
+### Event Name
+`OltActivated`
+
+### Description
+An OLT asset has become operationally available for topology and provisioning use.
+
+### Category
+Domain Event
+
+### Producer
+OLT Management
+
+### Consumers
+- Provisioning Workflow
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor activates a planned or maintenance OLT asset.
+
+### Business Meaning
+The OLT is now valid for new operational assignment.
+
+### Related Workflow
+OLT Workflow - Active state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal operational notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Activation actor, previous state, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automatic provisioning capacity publication.
+
+---
+
+## OltMaintenanceStarted
+
+### Event Name
+`OltMaintenanceStarted`
+
+### Description
+An OLT asset has been placed into maintenance lifecycle state.
+
+### Category
+Domain Event
+
+### Producer
+OLT Management
+
+### Consumers
+- Provisioning Workflow
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor transitions an active OLT into maintenance state.
+
+### Business Meaning
+The OLT remains historical and monitored but is unavailable for new provisioning assignment.
+
+### Related Workflow
+OLT Workflow - Maintenance state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal maintenance notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Maintenance actor, previous state, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Maintenance window linkage automation.
+
+---
+
+## OltRetired
+
+### Event Name
+`OltRetired`
+
+### Description
+An OLT asset has been retired from operational use.
+
+### Category
+Domain Event
+
+### Producer
+OLT Management
+
+### Consumers
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor retires an OLT after dependency validation passes.
+
+### Business Meaning
+The OLT is terminal and no longer valid for operational assignment.
+
+### Related Workflow
+OLT Workflow - Retired state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal retirement notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Retirement actor, dependency context, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Asset retirement archive workflow.
+
+---
+
 ## ClusterCreated
 
 ### Event Name
@@ -3414,6 +3631,10 @@ Impersonation session summary report for compliance review.
 |---|---|---|---|---|
 | CustomerRegistered | Customer Management | Notification, Timeline, Activity Log, Customer Portal | Normal | Domain |
 | CustomerUpdated | Customer Management | Timeline, Activity Log, Notification | Low | Domain |
+| OltCreated | OLT Management | Timeline, Activity Log | Low | Domain |
+| OltActivated | OLT Management | Provisioning Workflow, Timeline, Activity Log, Reporting | Low | Domain |
+| OltMaintenanceStarted | OLT Management | Provisioning Workflow, Timeline, Activity Log, Reporting | Low | Domain |
+| OltRetired | OLT Management | Timeline, Activity Log, Reporting | Low | Domain |
 | ClusterCreated | Area and Assignment Management | Timeline, Activity Log | Low | Domain |
 | ClusterActivated | Area and Assignment Management | Timeline, Activity Log, Reporting | Low | Domain |
 | ClusterInactivated | Area and Assignment Management | Timeline, Activity Log, Reporting | Low | Domain |

@@ -357,6 +357,11 @@ return [
             'icon' => 'fas fa-fw fa-box-open',
         ],
         [
+            'text' => 'OLTs',
+            'url'  => 'olts',
+            'icon' => 'fas fa-fw fa-network-wired',
+        ],
+        [
             'text' => 'Territories',
             'icon' => 'fas fa-fw fa-map-marked-alt',
             'submenu' => [

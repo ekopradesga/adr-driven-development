@@ -1010,6 +1010,32 @@ Service Package Management is in project scope, but the repository still lacks a
 
 ---
 
+### ARCH-036
+
+**Title:** OLT Module Lifecycle and Schema Finalization
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Description:**
+
+OLT Management is in project scope, but the repository still lacks an authoritative implementation contract for the OLT asset lifecycle, permission namespace, workflow transitions, and event surface. The existing Sprint 0 OLT migration persists a monitoring-like `offline` default status that conflicts with the documented asset lifecycle.
+
+**Recommended Action:**
+
+1. Define canonical OLT lifecycle states distinct from monitoring health states
+2. Create a dedicated OLT workflow document covering transition guards and provisioning assignment rules
+3. Finalize the OLT column contract and lifecycle business events before module generation
+
+**Resolution (2026-07-03):** `docs/workflows/olt-workflow.md` now defines the OLT asset lifecycle and transition guards. `docs/architecture/decisions.md` now defines canonical OLT lifecycle states and `olt.*` permission namespace. `docs/database/entities.md` now defines the column-level OLT schema and lifecycle reference. `docs/architecture/business-events.md` now defines OLT lifecycle business events. `docs/architecture/glossary.md` now includes `OLT Status`.
+
+---
+
 # Closed Items
 
 ### ARCH-032
@@ -1076,6 +1102,22 @@ Service Package Management is in project scope, but the repository still lacks a
 
 ---
 
+### ARCH-036
+
+**Title:** OLT Module Lifecycle and Schema Finalization
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Resolution (2026-07-03):** `docs/workflows/olt-workflow.md`, `docs/architecture/decisions.md`, `docs/database/entities.md`, `docs/architecture/business-events.md`, and `docs/architecture/glossary.md` now define canonical OLT asset lifecycle states, permission namespace, event contracts, and schema required for implementation.
+
+---
+
 ## Backlog Summary
 
 **Last Updated:** 2026-07-03
@@ -1085,7 +1127,7 @@ Service Package Management is in project scope, but the repository still lacks a
 | Priority | Count | Open Items | Closed Items |
 |---|---|---|---|
 | **Critical** | 7 | 0 | ARCH-001, ARCH-002, ARCH-003, ARCH-019, ARCH-020, ARCH-026, ARCH-027 |
-| **High** | 18 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025, ARCH-028, ARCH-029, ARCH-032, ARCH-033, ARCH-034, ARCH-035 |
+| **High** | 19 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025, ARCH-028, ARCH-029, ARCH-032, ARCH-033, ARCH-034, ARCH-035, ARCH-036 |
 | **Medium** | 4 | ARCH-010, ARCH-011, ARCH-013 | ARCH-024 |
 | **Low** | 3 | ARCH-012, ARCH-014, ARCH-015 | — |
 | **Investigation** | 3 | ARCH-016, ARCH-018 | ARCH-017 |
@@ -1094,7 +1136,7 @@ Service Package Management is in project scope, but the repository still lacks a
 
 | Status | Count | Items |
 |---|---|---|
-| **Closed** | 24 | ARCH-001–007, ARCH-017, ARCH-019–029, ARCH-032, ARCH-033, ARCH-034, ARCH-035 |
+| **Closed** | 25 | ARCH-001–007, ARCH-017, ARCH-019–029, ARCH-032, ARCH-033, ARCH-034, ARCH-035, ARCH-036 |
 | **Todo** | 4 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 |
 | **Open** | 2 | ARCH-016, ARCH-018 |
 | **Deferred** | 6 | ARCH-010, ARCH-011, ARCH-012, ARCH-013, ARCH-014, ARCH-015 |
@@ -1110,6 +1152,7 @@ Service Package Management is in project scope, but the repository still lacks a
 | Collector | ✅ Architecture approved | None |
 | Service Area | ✅ Architecture approved | None |
 | Package | ✅ Architecture approved | None |
+| OLT | ✅ Architecture approved | None |
 
 ---
 

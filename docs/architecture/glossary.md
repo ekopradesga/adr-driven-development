@@ -703,6 +703,25 @@ Part of logical and physical topology models.
 - FAT
 - ONU
 
+## OLT Status
+
+### Definition
+The lifecycle state of an `OLT` asset record. Expressed as the `olts.status` column and the `OltStatus` PHP backed enum.
+
+### Notes
+The four canonical states are:
+- **Planned** (`planned`) - registered but not operationally assignable. Default.
+- **Active** (`active`) - assignable for topology and provisioning use.
+- **Maintenance** (`maintenance`) - temporarily unavailable for new operational assignment.
+- **Retired** (`retired`) - terminal historical state.
+
+OLT Status is distinct from monitoring health states such as Healthy, Warning, Critical, Unknown, or Maintenance in the monitoring workflow.
+
+### Related Terms
+- OLT
+- Monitoring
+- ONU
+
 ## ODF
 
 ### Definition

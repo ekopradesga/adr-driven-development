@@ -219,6 +219,8 @@ When conflicts occur, follow the Documentation Hierarchy defined in the Architec
   - [Payment Allocation Model](#decision-payment-allocation-model)
   - [Overpayment and Credit Handling](#decision-overpayment-and-credit-handling)
 - [Monitoring & Network](#monitoring--network)
+  - [OLT Lifecycle Canonical States](#decision-olt-lifecycle-canonical-states)
+  - [OLT Permission Namespace and Assignment Rule](#decision-olt-permission-namespace-and-assignment-rule)
   - [Logical and Physical Topology Separation](#decision-logical-and-physical-topology-separation)
   - [Network Endpoint Terminology](#decision-network-endpoint-terminology)
   - [Health Status Abstraction](#decision-health-status-abstraction)
@@ -1204,6 +1206,44 @@ Real-world payment behavior requires credit carry-forward handling.
 - Reduced manual adjustments.
 
 # Monitoring & Network
+
+### Decision: OLT Lifecycle Canonical States
+
+#### Decision
+The canonical lifecycle states and persisted database values for OLT Management are:
+
+- `Planned` -> `planned` - Initial/default state; asset registered but not operationally assignable.
+- `Active` -> `active` - Asset is operationally assignable for topology and provisioning.
+- `Maintenance` -> `maintenance` - Temporarily unavailable for new operational assignment under maintenance context.
+- `Retired` -> `retired` - Terminal historical state; not operationally assignable.
+
+Monitoring health states such as healthy, warning, critical, unknown, and maintenance are separate runtime observations and must not replace the OLT lifecycle contract.
+
+#### Reason
+The Sprint 0 OLT migration currently persists `offline` as an OLT status default, while the architecture entity contract describes lifecycle states unrelated to monitoring health. Canonicalization is required before OLT enums, migrations, policies, and provisioning validation can be implemented consistently.
+
+#### Impact
+- `OltStatus` enum can be implemented without ambiguity.
+- `olts.status` default must be `planned`.
+- Provisioning assignment must resolve to `active` OLT assets only.
+- Monitoring health remains outside the OLT asset lifecycle.
+
+### Decision: OLT Permission Namespace and Assignment Rule
+
+#### Decision
+OLT Management uses the `olt.*` permission namespace and the following assignment governance:
+
+- OLT CRUD and lifecycle actions are authorized through `olt.view`, `olt.create`, `olt.update`, `olt.activate`, `olt.maintenance`, `olt.retire`, and `olt.export`.
+- Only `active` OLT assets may receive new topology attachments or provisioning assignments.
+- `maintenance` and `retired` OLT assets remain historically visible but must not be used for new provisioning allocation.
+
+#### Reason
+Without a canonical permission namespace and assignment rule, implementation may either overload broad `network.*` permissions or allow provisioning actions against non-operational assets.
+
+#### Impact
+- Policies, seeders, and navigation can reference one stable OLT namespace.
+- Provisioning and topology services can enforce status-aware OLT selection consistently.
+- OLT lifecycle transitions remain service-owned and auditable.
 
 ### Decision: Logical and Physical Topology Separation
 

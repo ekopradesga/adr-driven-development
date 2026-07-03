@@ -2004,9 +2004,34 @@ Core access network head-end entity for optical service delivery.
 Monitoring & Network
 
 ### Lifecycle
-Planned -> Active -> Degraded -> Maintenance -> Retired.
+Planned -> Active -> Maintenance -> Retired.
 
 Deletion behavior: Soft Delete when detached; Restrict with active topology dependencies.
+
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `olt_code` | VARCHAR(50) | No | Unique operational OLT code |
+| `name` | VARCHAR(255) | No | Display name |
+| `vendor` | VARCHAR(100) | Yes | Vendor identity |
+| `model` | VARCHAR(100) | Yes | Device model |
+| `ip_address` | VARCHAR(45) | No | Unique management IP |
+| `snmp_community` | VARCHAR(255) | Yes | Optional SNMP access profile reference/value |
+| `api_username` | VARCHAR(100) | Yes | Optional integration username |
+| `api_password` | VARCHAR(255) | Yes | Optional integration secret reference/value |
+| `location_name` | VARCHAR(255) | Yes | Human-readable location |
+| `latitude` | DECIMAL(10,7) | Yes | Geo coordinate |
+| `longitude` | DECIMAL(11,7) | Yes | Geo coordinate |
+| `status` | ENUM | No | `planned` (default), `active`, `maintenance`, `retired` |
+| `last_seen_at` | TIMESTAMP | Yes | Last observed connectivity timestamp |
+| `created_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `updated_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `deleted_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+| `deleted_at` | TIMESTAMP | Yes | Soft delete |
 
 ### Relationships
 - OLT 1 -> N ODF
@@ -2019,6 +2044,12 @@ Vendor identity, operational status, topology references, location context.
 
 ### Business Rules
 Participates in logical and physical topology models.
+
+Only `active` OLT assets may receive new provisioning assignments or operational topology attachment.
+
+Monitoring health states must not be stored as OLT lifecycle values.
+
+Retirement requires no active ONU or ODF dependencies.
 
 ### Notes
 Operational health should be abstracted for end users.
@@ -2033,6 +2064,7 @@ Yes
 Infrastructure
 
 ### Lifecycle Reference
+docs/workflows/olt-workflow.md
 docs/workflows/network-monitoring-workflow.md
 
 ### Immutability
@@ -2048,7 +2080,10 @@ Yes
 - Global Search: Yes
 
 ### Produces Events
-None (health events are produced by DeviceHealthState)
+- OltCreated
+- OltActivated
+- OltMaintenanceStarted
+- OltRetired
 
 ### Consumes Events
 None

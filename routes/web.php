@@ -5,6 +5,7 @@ use App\Http\Controllers\CollectionTaskController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\OltController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentAllocationController;
@@ -60,9 +61,13 @@ Route::middleware('auth')->group(function () {
     // -------------------------------------------------------------------------
     Route::resource('subscriptions', SubscriptionController::class);
     Route::resource('packages', PackageController::class);
+    Route::resource('olts', OltController::class);
     Route::post('packages/{package}/activate', [PackageController::class, 'activate'])->name('packages.activate');
     Route::post('packages/{package}/deprecate', [PackageController::class, 'deprecate'])->name('packages.deprecate');
     Route::post('packages/{package}/retire', [PackageController::class, 'retire'])->name('packages.retire');
+    Route::post('olts/{olt}/activate', [OltController::class, 'activate'])->name('olts.activate');
+    Route::post('olts/{olt}/maintenance', [OltController::class, 'maintenance'])->name('olts.maintenance');
+    Route::post('olts/{olt}/retire', [OltController::class, 'retire'])->name('olts.retire');
     Route::post('subscriptions/{subscription}/activate',            [SubscriptionController::class, 'activate'])->name('subscriptions.activate');
     Route::post('subscriptions/{subscription}/suspend',             [SubscriptionController::class, 'suspend'])->name('subscriptions.suspend');
     Route::post('subscriptions/{subscription}/request-reactivation',[SubscriptionController::class, 'requestReactivation'])->name('subscriptions.request-reactivation');

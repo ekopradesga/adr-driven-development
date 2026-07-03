@@ -1448,3 +1448,65 @@
 
 **Notes:** Static validation passed (`get_errors` no errors found). A targeted `php artisan test --filter=PackageModuleTest` run was attempted, but this environment returned no output, so runtime confirmation remains pending.
 
+---
+
+### 2026-07-03 | Architecture | Sprint 3.4 Pre-Work — OLT Module Architecture Finalization
+
+**Summary:** Closed the OLT module architecture blocker before implementation by formalizing the OLT asset lifecycle contract. Added canonical OLT lifecycle decisions and `olt.*` permission namespace governance, created a dedicated OLT workflow document, upgraded OLT entity documentation with column-level schema and lifecycle rules, expanded business events with OLT lifecycle events, and recorded/closed ARCH-036 in the architecture backlog.
+
+**Files Added:**
+- docs/workflows/olt-workflow.md
+
+**Files Modified:**
+- docs/architecture/decisions.md
+- docs/architecture/glossary.md
+- docs/database/entities.md
+- docs/architecture/business-events.md
+- docs/architecture/architecture-backlog.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** OLT Management is now implementation-ready with explicit lifecycle states (`planned`, `active`, `maintenance`, `retired`), a dedicated workflow distinct from monitoring health states, permission namespace governance, event contracts, and schema-level constraints aligned across architecture documents.
+
+**Notes:** Documentation-only pre-work. No runtime code execution performed in this step.
+
+---
+
+### 2026-07-03 | Backend | Sprint 3.4 — OLT Module Implementation
+
+**Summary:** Implemented the complete OLT module following the finalized architecture contract. Replaced the Sprint 0 OLT status default with the canonical lifecycle value, added OLT enum/model/service/policy/controller/request layers, introduced OLT lifecycle domain events, wired OLT routes and menu integration, seeded `olt.*` permissions and role mappings, created OLT CRUD and lifecycle views, and added dedicated feature tests.
+
+**Files Added:**
+- app/Enums/OltStatus.php
+- app/Domain/Events/OltCreated.php
+- app/Domain/Events/OltActivated.php
+- app/Domain/Events/OltMaintenanceStarted.php
+- app/Domain/Events/OltRetired.php
+- app/Models/Olt.php
+- app/Policies/OltPolicy.php
+- app/Services/Network/OltService.php
+- app/Http/Controllers/OltController.php
+- app/Http/Requests/Olt/StoreOltRequest.php
+- app/Http/Requests/Olt/UpdateOltRequest.php
+- app/Http/Requests/Olt/ActivateOltRequest.php
+- app/Http/Requests/Olt/MaintenanceOltRequest.php
+- app/Http/Requests/Olt/RetireOltRequest.php
+- database/factories/OltFactory.php
+- resources/views/olts/index.blade.php
+- resources/views/olts/create.blade.php
+- resources/views/olts/edit.blade.php
+- resources/views/olts/show.blade.php
+- tests/Feature/OltModuleTest.php
+
+**Files Modified:**
+- app/Providers/AuthServiceProvider.php
+- database/migrations/2026_06_25_000003_create_olts_table.php
+- database/seeders/PermissionSeeder.php
+- database/seeders/RolePermissionSeeder.php
+- routes/web.php
+- config/adminlte.php
+- docs/changelog/development-log.md
+
+**Architecture Impact:** OLT lifecycle is now service-owned and policy-protected with canonical asset lifecycle values separated from monitoring health states. New OLT assignment and provisioning eligibility can now be enforced consistently against `active` lifecycle state.
+
+**Notes:** Static validation passed (`get_errors` found no errors in touched files). A targeted `php artisan test --filter=OltModuleTest` run was attempted, but this environment returned no output, so runtime confirmation remains pending.
+

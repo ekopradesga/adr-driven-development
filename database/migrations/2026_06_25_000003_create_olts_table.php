@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('location_name')->nullable();
             $table->decimal('latitude', 10, 7)->nullable();
             $table->decimal('longitude', 10, 7)->nullable();
-            $table->string('status', 30)->default('offline')->index();
+            $table->string('status', 30)->default('planned')->index();
             $table->timestamp('last_seen_at')->nullable()->index();
 
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();

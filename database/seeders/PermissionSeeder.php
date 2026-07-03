@@ -74,6 +74,17 @@ class PermissionSeeder extends Seeder
             ['key' => 'package.export',    'name' => 'Export Packages',    'category' => 'package'],
 
             // ----------------------------------------------------------------
+            // OLT Management
+            // ----------------------------------------------------------------
+            ['key' => 'olt.view',        'name' => 'View OLT Assets',              'category' => 'olt'],
+            ['key' => 'olt.create',      'name' => 'Create OLT Assets',            'category' => 'olt'],
+            ['key' => 'olt.update',      'name' => 'Update OLT Assets',            'category' => 'olt'],
+            ['key' => 'olt.activate',    'name' => 'Activate OLT Assets',          'category' => 'olt'],
+            ['key' => 'olt.maintenance', 'name' => 'Move OLT Assets to Maintenance','category' => 'olt'],
+            ['key' => 'olt.retire',      'name' => 'Retire OLT Assets',            'category' => 'olt'],
+            ['key' => 'olt.export',      'name' => 'Export OLT Data',              'category' => 'olt'],
+
+            // ----------------------------------------------------------------
             // Billing
             // ----------------------------------------------------------------
             ['key' => 'billing.view',     'name' => 'View Billing Records', 'category' => 'billing'],

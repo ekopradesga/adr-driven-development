@@ -1823,3 +1823,2039 @@ index 0000000..1b5b8cc
 +            ->assertSessionHasErrors();
 +    }
 +}
+commit 653340a50b2f1ac2141c858cc3469c01bb97e77a
+Author: Eko Prasetyo <prasetyodesign@gmail.com>
+Date:   Fri Jul 3 09:40:56 2026 +0700
+
+    Sprint 2.3 - Invoice Module (finish)
+
+diff --git a/database/factories/InvoiceFactory.php b/database/factories/InvoiceFactory.php
+index 260c1ac..e69b9d1 100644
+--- a/database/factories/InvoiceFactory.php
++++ b/database/factories/InvoiceFactory.php
+@@ -3,7 +3,10 @@
+ namespace Database\Factories;
+ 
+ use App\Enums\InvoiceStatus;
++use App\Models\Customer;
+ use App\Models\Invoice;
++use App\Models\Package;
++use App\Models\Subscription;
+ use Illuminate\Database\Eloquent\Factories\Factory;
+ 
+ /**
+@@ -21,8 +24,24 @@ public function definition(): array
+ 
+         return [
+             'invoice_number'     => 'INV-' . now()->format('Ym') . '-' . str_pad((string) $this->faker->numberBetween(1, 999999), 6, '0', STR_PAD_LEFT),
+-            'customer_id'        => null,
+-            'subscription_id'    => null,
++            'customer_id'        => Customer::factory(),
++            'subscription_id'    => function (array $attributes): int {
++                $package = Package::query()->first();
++
++                if (!$package) {
++                    $package = Package::create([
++                        'name' => 'Factory Package ' . strtoupper($this->faker->bothify('??##')),
++                        'monthly_price' => 100,
++                        'downstream_kbps' => 1000,
++                        'upstream_kbps' => 500,
++                    ]);
++                }
++
++                return Subscription::factory()->active()->create([
++                    'customer_id' => $attributes['customer_id'],
++                    'package_id' => $package->id,
++                ])->id;
++            },
+             'status'             => InvoiceStatus::Draft->value,
+             'period_start'       => $issueDate->format('Y-m-d'),
+             'period_end'         => (clone $issueDate)->modify('+30 days')->format('Y-m-d'),
+diff --git a/database/migrations/2026_07_03_000002_create_invoices_table.php b/database/migrations/2026_07_02_000005_create_invoices_table.php
+similarity index 100%
+rename from database/migrations/2026_07_03_000002_create_invoices_table.php
+rename to database/migrations/2026_07_02_000005_create_invoices_table.php
+diff --git a/database/migrations/2026_07_03_000003_create_invoice_items_table.php b/database/migrations/2026_07_02_000006_create_invoice_items_table.php
+similarity index 100%
+rename from database/migrations/2026_07_03_000003_create_invoice_items_table.php
+rename to database/migrations/2026_07_02_000006_create_invoice_items_table.php
+diff --git a/docs/changelog/development-log.md b/docs/changelog/development-log.md
+index 4aca673..4cc0dd5 100644
+--- a/docs/changelog/development-log.md
++++ b/docs/changelog/development-log.md
+@@ -1027,3 +1027,46 @@ ### 2026-07-03 | Backend | Sprint 2.2 — Subscription Module Implementation
+ 
+ **Notes:** Package and Onu models remain stubs; full implementation is separate stories. The packages table migration (2026_06_25_000002) uses is_active boolean rather than a status enum — this will be reconciled when the Package module architecture is reviewed. Test suite requires running migrations before execution.
+ 
++---
++
++### 2026-07-03 | Backend | Sprint 2.3 — Invoice Module Implementation
++
++**Summary:** Implemented the complete Invoice module following the approved architecture and reusing the Customer/Subscription module patterns. Built Billing service-first flow end-to-end: created InvoicePolicy, four Form Requests (store/update/publish/cancel), InvoiceResource, InvoiceController (orchestration only), InvoiceService (all business rules and lifecycle transitions), Invoice and InvoiceItem models, PaymentAllocation stub model, two domain events (InvoiceOverdue, InvoiceCancelled), full Blade UI (index/show/create/edit), factory support, feature tests, route registration, policy registration, and AdminLTE navigation integration. Kept invoice lifecycle enforcement in InvoiceService: create draft invoice with one-invoice-per-period protection, publish draft invoice with preconditions (must have items and positive total), cancel draft-only with mandatory reason, overdue transition only from published/partially-paid, and payment allocation bookkeeping via `recordPaymentAllocation()`. Ensured immutable invoice behavior after publication by restricting updates to draft status only. Replaced misordered Invoice migrations with architecture-aligned replacements at the correct timestamp order so payment allocation FK dependencies resolve during fresh migrations.
++
++**Files Added:**
++- app/Domain/Events/InvoiceOverdue.php
++- app/Domain/Events/InvoiceCancelled.php
++- app/Policies/InvoicePolicy.php
++- app/Http/Requests/Invoice/StoreInvoiceRequest.php
++- app/Http/Requests/Invoice/UpdateInvoiceRequest.php
++- app/Http/Requests/Invoice/PublishInvoiceRequest.php
++- app/Http/Requests/Invoice/CancelInvoiceRequest.php
++- app/Http/Resources/InvoiceResource.php
++- app/Services/Billing/InvoiceService.php
++- app/Http/Controllers/InvoiceController.php
++- app/Models/InvoiceItem.php
++- app/Models/PaymentAllocation.php
++- database/factories/InvoiceFactory.php
++- resources/views/invoices/index.blade.php
++- resources/views/invoices/show.blade.php
++- resources/views/invoices/create.blade.php
++- resources/views/invoices/edit.blade.php
++- tests/Feature/InvoiceControllerTest.php
++- database/migrations/2026_07_02_000005_create_invoices_table.php
++- database/migrations/2026_07_02_000006_create_invoice_items_table.php
++
++**Files Modified:**
++- app/Models/Invoice.php (stub → full implementation)
++- app/Providers/AuthServiceProvider.php (InvoicePolicy registered)
++- routes/web.php (invoice resource + lifecycle routes)
++- config/adminlte.php (Invoices navigation item added)
++- docs/changelog/development-log.md
++
++**Files Deleted:**
++- database/migrations/2026_07_03_000002_create_invoices_table.php (replaced to fix migration ordering)
++- database/migrations/2026_07_03_000003_create_invoice_items_table.php (replaced to fix migration ordering)
++
++**Architecture Impact:** Invoice module now follows Service-First Application Layer rules consistently: Controller handles authorize/validate/invoke/respond only; all lifecycle and business constraints are centralized in `InvoiceService`. Domain events implement `ShouldDispatchAfterCommit` semantics through the module event pattern. Migration order is now architecture-safe for fresh installs: invoices and invoice_items run before payment_allocations, resolving FK dependency correctness. Invoice immutability model is enforced in code (draft editable; published immutable except payment-driven financial fields).
++
++**Notes:** Initial focused test run failed before executing assertions due pre-existing migration order dependency (`payment_allocations.invoice_id` FK before invoices existed). This was resolved by replacing the invoice migration timestamps to run before payment allocations. A re-run of `InvoiceControllerTest` was requested but skipped in-session by user action, so final green test confirmation is pending.
++
+diff --git a/last-commit.patch b/last-commit.patch
+new file mode 100644
+index 0000000..daa5e43
+--- /dev/null
++++ b/last-commit.patch
+@@ -0,0 +1,1825 @@
++commit 4f2ef48274154b58b59588c27d79d6283cfaf25d
++Author: Eko Prasetyo <prasetyodesign@gmail.com>
++Date:   Fri Jul 3 04:30:15 2026 +0700
++
++    Sprint 2.3 - Invoice Module (ran out of tokens)
++
++diff --git a/app/Domain/Events/InvoiceCancelled.php b/app/Domain/Events/InvoiceCancelled.php
++new file mode 100644
++index 0000000..9e3e61d
++--- /dev/null
+++++ b/app/Domain/Events/InvoiceCancelled.php
++@@ -0,0 +1,44 @@
+++<?php
+++
+++namespace App\Domain\Events;
+++
+++use Carbon\Carbon;
+++use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
+++use Illuminate\Foundation\Events\Dispatchable;
+++use Illuminate\Queue\SerializesModels;
+++
+++/**
+++ * InvoiceCancelled Domain Event
+++ *
+++ * Dispatched when a draft invoice is cancelled before publication.
+++ * Cancellation reason is preserved for audit.
+++ *
+++ * Consumers: Timeline, Activity Log, Notification (internal)
+++ * Reference: docs/architecture/business-events.md — InvoiceCancelled
+++ */
+++class InvoiceCancelled implements ShouldDispatchAfterCommit
+++{
+++    use Dispatchable, SerializesModels;
+++
+++    public readonly int $invoiceId;
+++    public readonly int $customerId;
+++    public readonly int $subscriptionId;
+++    public readonly string $reason;
+++    public readonly Carbon $occurredAt;
+++    public readonly ?int $actorId;
+++
+++    public function __construct(
+++        int $invoiceId,
+++        int $customerId,
+++        int $subscriptionId,
+++        string $reason,
+++        ?int $actorId = null
+++    ) {
+++        $this->invoiceId      = $invoiceId;
+++        $this->customerId     = $customerId;
+++        $this->subscriptionId = $subscriptionId;
+++        $this->reason         = $reason;
+++        $this->actorId        = $actorId;
+++        $this->occurredAt     = now();
+++    }
+++}
++diff --git a/app/Domain/Events/InvoiceOverdue.php b/app/Domain/Events/InvoiceOverdue.php
++new file mode 100644
++index 0000000..4323e38
++--- /dev/null
+++++ b/app/Domain/Events/InvoiceOverdue.php
++@@ -0,0 +1,42 @@
+++<?php
+++
+++namespace App\Domain\Events;
+++
+++use Carbon\Carbon;
+++use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
+++use Illuminate\Foundation\Events\Dispatchable;
+++use Illuminate\Queue\SerializesModels;
+++
+++/**
+++ * InvoiceOverdue Domain Event
+++ *
+++ * Dispatched when a published invoice exceeds its due date and grace period
+++ * without full settlement.
+++ *
+++ * Consumers: Subscription Lifecycle (suspension candidate), Collector Workflow,
+++ *            Notification, Timeline, Activity Log, Customer Portal
+++ * Reference: docs/architecture/business-events.md — InvoiceOverdue
+++ */
+++class InvoiceOverdue implements ShouldDispatchAfterCommit
+++{
+++    use Dispatchable, SerializesModels;
+++
+++    public readonly int $invoiceId;
+++    public readonly int $customerId;
+++    public readonly int $subscriptionId;
+++    public readonly float $balanceAmount;
+++    public readonly Carbon $occurredAt;
+++
+++    public function __construct(
+++        int $invoiceId,
+++        int $customerId,
+++        int $subscriptionId,
+++        float $balanceAmount
+++    ) {
+++        $this->invoiceId      = $invoiceId;
+++        $this->customerId     = $customerId;
+++        $this->subscriptionId = $subscriptionId;
+++        $this->balanceAmount  = $balanceAmount;
+++        $this->occurredAt     = now();
+++    }
+++}
++diff --git a/app/Http/Controllers/InvoiceController.php b/app/Http/Controllers/InvoiceController.php
++new file mode 100644
++index 0000000..45aa65d
++--- /dev/null
+++++ b/app/Http/Controllers/InvoiceController.php
++@@ -0,0 +1,98 @@
+++<?php
+++
+++namespace App\Http\Controllers;
+++
+++use App\Http\Requests\Invoice\CancelInvoiceRequest;
+++use App\Http\Requests\Invoice\PublishInvoiceRequest;
+++use App\Http\Requests\Invoice\StoreInvoiceRequest;
+++use App\Http\Requests\Invoice\UpdateInvoiceRequest;
+++use App\Models\Invoice;
+++use App\Services\Billing\InvoiceService;
+++use Illuminate\Http\RedirectResponse;
+++use Illuminate\Http\Request;
+++use Illuminate\View\View;
+++
+++/**
+++ * InvoiceController — Billing module.
+++ *
+++ * Orchestration only. Zero business logic.
+++ * Delegates all business operations to InvoiceService.
+++ */
+++class InvoiceController extends Controller
+++{
+++    public function __construct(
+++        private readonly InvoiceService $invoiceService
+++    ) {}
+++
+++    public function index(Request $request): View
+++    {
+++        $this->authorize('viewAny', Invoice::class);
+++
+++        return view('invoices.index', $this->invoiceService->buildIndexData(
+++            $request->only('search', 'status', 'customer_id')
+++        ));
+++    }
+++
+++    public function create(): View
+++    {
+++        $this->authorize('create', Invoice::class);
+++
+++        return view('invoices.create', $this->invoiceService->buildCreateData());
+++    }
+++
+++    public function store(StoreInvoiceRequest $request): RedirectResponse
+++    {
+++        $invoice = $this->invoiceService->create($request->validated());
+++
+++        return redirect()->route('invoices.show', $invoice)
+++            ->with('success', "Invoice {$invoice->invoice_number} generated.");
+++    }
+++
+++    public function show(Invoice $invoice): View
+++    {
+++        $this->authorize('view', $invoice);
+++
+++        return view('invoices.show', $this->invoiceService->findForShow($invoice));
+++    }
+++
+++    public function edit(Invoice $invoice): View
+++    {
+++        $this->authorize('update', $invoice);
+++
+++        return view('invoices.edit', $this->invoiceService->buildEditData($invoice));
+++    }
+++
+++    public function update(UpdateInvoiceRequest $request, Invoice $invoice): RedirectResponse
+++    {
+++        $this->invoiceService->update($invoice, $request->validated());
+++
+++        return redirect()->route('invoices.show', $invoice)
+++            ->with('success', 'Invoice updated.');
+++    }
+++
+++    public function destroy(Invoice $invoice): RedirectResponse
+++    {
+++        $this->authorize('cancel', $invoice);
+++
+++        $this->invoiceService->delete($invoice);
+++
+++        return redirect()->route('invoices.index')
+++            ->with('success', 'Invoice cancelled.');
+++    }
+++
+++    public function publish(PublishInvoiceRequest $request, Invoice $invoice): RedirectResponse
+++    {
+++        $this->invoiceService->publish($invoice);
+++
+++        return redirect()->route('invoices.show', $invoice)
+++            ->with('success', 'Invoice published.');
+++    }
+++
+++    public function cancel(CancelInvoiceRequest $request, Invoice $invoice): RedirectResponse
+++    {
+++        $this->invoiceService->cancel($invoice, $request->validated('cancellation_reason'));
+++
+++        return redirect()->route('invoices.show', $invoice)
+++            ->with('success', 'Invoice cancelled.');
+++    }
+++}
++diff --git a/app/Http/Requests/Invoice/CancelInvoiceRequest.php b/app/Http/Requests/Invoice/CancelInvoiceRequest.php
++new file mode 100644
++index 0000000..18ee523
++--- /dev/null
+++++ b/app/Http/Requests/Invoice/CancelInvoiceRequest.php
++@@ -0,0 +1,21 @@
+++<?php
+++
+++namespace App\Http\Requests\Invoice;
+++
+++use App\Models\Invoice;
+++use Illuminate\Foundation\Http\FormRequest;
+++
+++class CancelInvoiceRequest extends FormRequest
+++{
+++    public function authorize(): bool
+++    {
+++        return $this->user()->can('cancel', $this->route('invoice'));
+++    }
+++
+++    public function rules(): array
+++    {
+++        return [
+++            'cancellation_reason' => ['required', 'string', 'min:10', 'max:5000'],
+++        ];
+++    }
+++}
++diff --git a/app/Http/Requests/Invoice/PublishInvoiceRequest.php b/app/Http/Requests/Invoice/PublishInvoiceRequest.php
++new file mode 100644
++index 0000000..d8a9c44
++--- /dev/null
+++++ b/app/Http/Requests/Invoice/PublishInvoiceRequest.php
++@@ -0,0 +1,21 @@
+++<?php
+++
+++namespace App\Http\Requests\Invoice;
+++
+++use App\Models\Invoice;
+++use Illuminate\Foundation\Http\FormRequest;
+++
+++class PublishInvoiceRequest extends FormRequest
+++{
+++    public function authorize(): bool
+++    {
+++        return $this->user()->can('publish', $this->route('invoice'));
+++    }
+++
+++    public function rules(): array
+++    {
+++        return [
+++            'notes' => ['nullable', 'string', 'max:5000'],
+++        ];
+++    }
+++}
++diff --git a/app/Http/Requests/Invoice/StoreInvoiceRequest.php b/app/Http/Requests/Invoice/StoreInvoiceRequest.php
++new file mode 100644
++index 0000000..cc07ccd
++--- /dev/null
+++++ b/app/Http/Requests/Invoice/StoreInvoiceRequest.php
++@@ -0,0 +1,37 @@
+++<?php
+++
+++namespace App\Http\Requests\Invoice;
+++
+++use App\Models\Invoice;
+++use Illuminate\Foundation\Http\FormRequest;
+++
+++class StoreInvoiceRequest extends FormRequest
+++{
+++    public function authorize(): bool
+++    {
+++        return $this->user()->can('create', Invoice::class);
+++    }
+++
+++    public function rules(): array
+++    {
+++        return [
+++            'customer_id'     => ['required', 'integer', 'exists:customers,id'],
+++            'subscription_id'  => ['required', 'integer', 'exists:subscriptions,id'],
+++            'period_start'    => ['required', 'date'],
+++            'period_end'      => ['required', 'date', 'after_or_equal:period_start'],
+++            'issue_date'      => ['required', 'date'],
+++            'due_date'        => ['required', 'date', 'after_or_equal:issue_date'],
+++            'tax_amount'      => ['nullable', 'numeric', 'min:0'],
+++            'discount_amount' => ['nullable', 'numeric', 'min:0'],
+++            'items'           => ['nullable', 'array'],
+++            'items.*.description'  => ['required_with:items', 'string', 'max:255'],
+++            'items.*.item_type'    => ['nullable', 'string', 'max:30'],
+++            'items.*.quantity'     => ['nullable', 'integer', 'min:1'],
+++            'items.*.unit_price'   => ['required_with:items', 'numeric', 'min:0'],
+++            'items.*.total_amount' => ['nullable', 'numeric', 'min:0'],
+++            'items.*.sort_order'   => ['nullable', 'integer', 'min:0'],
+++            'items.*.notes'        => ['nullable', 'string', 'max:5000'],
+++            'notes'           => ['nullable', 'string', 'max:5000'],
+++        ];
+++    }
+++}
++diff --git a/app/Http/Requests/Invoice/UpdateInvoiceRequest.php b/app/Http/Requests/Invoice/UpdateInvoiceRequest.php
++new file mode 100644
++index 0000000..20bdcd4
++--- /dev/null
+++++ b/app/Http/Requests/Invoice/UpdateInvoiceRequest.php
++@@ -0,0 +1,27 @@
+++<?php
+++
+++namespace App\Http\Requests\Invoice;
+++
+++use App\Models\Invoice;
+++use Illuminate\Foundation\Http\FormRequest;
+++
+++class UpdateInvoiceRequest extends FormRequest
+++{
+++    public function authorize(): bool
+++    {
+++        return $this->user()->can('update', $this->route('invoice'));
+++    }
+++
+++    public function rules(): array
+++    {
+++        return [
+++            'period_start'    => ['required', 'date'],
+++            'period_end'      => ['required', 'date', 'after_or_equal:period_start'],
+++            'issue_date'      => ['required', 'date'],
+++            'due_date'        => ['required', 'date', 'after_or_equal:issue_date'],
+++            'tax_amount'      => ['nullable', 'numeric', 'min:0'],
+++            'discount_amount' => ['nullable', 'numeric', 'min:0'],
+++            'notes'           => ['nullable', 'string', 'max:5000'],
+++        ];
+++    }
+++}
++diff --git a/app/Http/Resources/InvoiceResource.php b/app/Http/Resources/InvoiceResource.php
++new file mode 100644
++index 0000000..224742b
++--- /dev/null
+++++ b/app/Http/Resources/InvoiceResource.php
++@@ -0,0 +1,36 @@
+++<?php
+++
+++namespace App\Http\Resources;
+++
+++use Illuminate\Http\Request;
+++use Illuminate\Http\Resources\Json\JsonResource;
+++
+++class InvoiceResource extends JsonResource
+++{
+++    public function toArray(Request $request): array
+++    {
+++        return [
+++            'id'                => $this->id,
+++            'invoice_number'     => $this->invoice_number,
+++            'customer_id'        => $this->customer_id,
+++            'subscription_id'    => $this->subscription_id,
+++            'status'             => $this->status->value,
+++            'status_label'       => $this->status->label(),
+++            'period_start'       => $this->period_start?->toDateString(),
+++            'period_end'         => $this->period_end?->toDateString(),
+++            'issue_date'         => $this->issue_date?->toDateString(),
+++            'due_date'           => $this->due_date?->toDateString(),
+++            'subtotal_amount'    => $this->subtotal_amount,
+++            'tax_amount'         => $this->tax_amount,
+++            'discount_amount'    => $this->discount_amount,
+++            'total_amount'       => $this->total_amount,
+++            'paid_amount'        => $this->paid_amount,
+++            'balance_amount'     => $this->balance_amount,
+++            'published_at'       => $this->published_at?->toISOString(),
+++            'overdue_at'         => $this->overdue_at?->toISOString(),
+++            'cancelled_at'       => $this->cancelled_at?->toISOString(),
+++            'cancellation_reason'=> $this->cancellation_reason,
+++            'created_at'         => $this->created_at?->toISOString(),
+++        ];
+++    }
+++}
++diff --git a/app/Models/Invoice.php b/app/Models/Invoice.php
++index 486307e..4fff259 100644
++--- a/app/Models/Invoice.php
+++++ b/app/Models/Invoice.php
++@@ -2,16 +2,152 @@
++ 
++ namespace App\Models;
++ 
+++use App\Enums\InvoiceStatus;
+++use Illuminate\Database\Eloquent\Factories\HasFactory;
++ use Illuminate\Database\Eloquent\Model;
++-use Illuminate\Database\Eloquent\SoftDeletes;
+++use Illuminate\Database\Eloquent\Relations\BelongsTo;
+++use Illuminate\Database\Eloquent\Relations\HasMany;
++ 
++ /**
++- * Invoice — Billing module (stub).
++- * Full Invoice module implementation is a separate story.
+++ * Invoice — Billing module.
+++ *
+++ * Aggregate Root. Invoices are NEVER deleted — no SoftDeletes.
+++ * After publication, only paid_amount, balance_amount, and status
+++ * may change (driven by Payment Workflow events and billing policy only).
+++ *
+++ * Reference: docs/database/entities.md — Invoice entity
+++ *            docs/workflows/billing-workflow.md
++  */
++ class Invoice extends Model
++ {
++-    use SoftDeletes;
+++    use HasFactory;
++ 
++-    protected $fillable = ['customer_id', 'subscription_id', 'status', 'amount'];
+++    // No SoftDeletes — invoices are permanent financial records.
+++
+++    protected $fillable = [
+++        'invoice_number',
+++        'customer_id',
+++        'subscription_id',
+++        'status',
+++        'period_start',
+++        'period_end',
+++        'issue_date',
+++        'due_date',
+++        'subtotal_amount',
+++        'tax_amount',
+++        'discount_amount',
+++        'total_amount',
+++        'paid_amount',
+++        'balance_amount',
+++        'published_at',
+++        'overdue_at',
+++        'cancelled_at',
+++        'cancellation_reason',
+++        'notes',
+++    ];
+++
+++    protected $casts = [
+++        'status'          => InvoiceStatus::class,
+++        'period_start'    => 'date',
+++        'period_end'      => 'date',
+++        'issue_date'      => 'date',
+++        'due_date'        => 'date',
+++        'subtotal_amount' => 'decimal:2',
+++        'tax_amount'      => 'decimal:2',
+++        'discount_amount' => 'decimal:2',
+++        'total_amount'    => 'decimal:2',
+++        'paid_amount'     => 'decimal:2',
+++        'balance_amount'  => 'decimal:2',
+++        'published_at'    => 'datetime',
+++        'overdue_at'      => 'datetime',
+++        'cancelled_at'    => 'datetime',
+++    ];
+++
+++    // -------------------------------------------------------------------------
+++    // Relationships
+++    // -------------------------------------------------------------------------
+++
+++    public function customer(): BelongsTo
+++    {
+++        return $this->belongsTo(Customer::class);
+++    }
+++
+++    public function subscription(): BelongsTo
+++    {
+++        return $this->belongsTo(Subscription::class);
+++    }
+++
+++    public function items(): HasMany
+++    {
+++        return $this->hasMany(InvoiceItem::class)->orderBy('sort_order')->orderBy('id');
+++    }
+++
+++    public function paymentAllocations(): HasMany
+++    {
+++        return $this->hasMany(PaymentAllocation::class);
+++    }
+++
+++    // -------------------------------------------------------------------------
+++    // Scopes
+++    // -------------------------------------------------------------------------
+++
+++    public function scopeDraft($query)
+++    {
+++        return $query->where('status', InvoiceStatus::Draft->value);
+++    }
+++
+++    public function scopePublished($query)
+++    {
+++        return $query->where('status', InvoiceStatus::Published->value);
+++    }
+++
+++    public function scopeOverdue($query)
+++    {
+++        return $query->where('status', InvoiceStatus::Overdue->value);
+++    }
+++
+++    public function scopePaid($query)
+++    {
+++        return $query->where('status', InvoiceStatus::Paid->value);
+++    }
+++
+++    public function scopePartiallyPaid($query)
+++    {
+++        return $query->where('status', InvoiceStatus::PartiallyPaid->value);
+++    }
+++
+++    public function scopeCancelled($query)
+++    {
+++        return $query->where('status', InvoiceStatus::Cancelled->value);
+++    }
+++
+++    public function scopeUnpaid($query)
+++    {
+++        return $query->whereIn('status', [
+++            InvoiceStatus::Published->value,
+++            InvoiceStatus::PartiallyPaid->value,
+++            InvoiceStatus::Overdue->value,
+++        ]);
+++    }
+++
+++    // -------------------------------------------------------------------------
+++    // State checks
+++    // -------------------------------------------------------------------------
+++
+++    public function isDraft(): bool         { return $this->status->isDraft(); }
+++    public function isPublished(): bool     { return $this->status->isPublished(); }
+++    public function isPartiallyPaid(): bool { return $this->status->isPartiallyPaid(); }
+++    public function isPaid(): bool          { return $this->status->isPaid(); }
+++    public function isOverdue(): bool       { return $this->status->isOverdue(); }
+++    public function isCancelled(): bool     { return $this->status->isCancelled(); }
+++
+++    /** Invoice items may be added/removed and metadata may be edited. */
+++    public function isEditable(): bool { return $this->status->isEditable(); }
+++
+++    /** Invoice may receive payment allocations. */
+++    public function isPayable(): bool { return $this->status->isPayable(); }
+++
+++    /** Invoice has reached a terminal state (Paid or Cancelled). */
+++    public function isTerminal(): bool { return $this->status->isTerminal(); }
++ }
+++
++diff --git a/app/Models/InvoiceItem.php b/app/Models/InvoiceItem.php
++new file mode 100644
++index 0000000..caddf26
++--- /dev/null
+++++ b/app/Models/InvoiceItem.php
++@@ -0,0 +1,67 @@
+++<?php
+++
+++namespace App\Models;
+++
+++use Illuminate\Database\Eloquent\Factories\HasFactory;
+++use Illuminate\Database\Eloquent\Model;
+++use Illuminate\Database\Eloquent\Relations\BelongsTo;
+++
+++/**
+++ * InvoiceItem — Billing module.
+++ *
+++ * Line item detail under an Invoice.
+++ * May be added or removed only while the parent Invoice is in Draft status.
+++ * Once the parent Invoice is published, InvoiceItems are permanently immutable.
+++ * No SoftDeletes — hard delete only while Invoice is Draft.
+++ *
+++ * Reference: docs/database/entities.md — InvoiceItem entity
+++ */
+++class InvoiceItem extends Model
+++{
+++    use HasFactory;
+++
+++    // No SoftDeletes — hard delete only, and only while Invoice is Draft.
+++
+++    protected $fillable = [
+++        'invoice_id',
+++        'description',
+++        'item_type',
+++        'quantity',
+++        'unit_price',
+++        'total_amount',
+++        'sort_order',
+++        'notes',
+++    ];
+++
+++    protected $casts = [
+++        'quantity'     => 'integer',
+++        'unit_price'   => 'decimal:2',
+++        'total_amount' => 'decimal:2',
+++        'sort_order'   => 'integer',
+++    ];
+++
+++    // -------------------------------------------------------------------------
+++    // Relationships
+++    // -------------------------------------------------------------------------
+++
+++    public function invoice(): BelongsTo
+++    {
+++        return $this->belongsTo(Invoice::class);
+++    }
+++
+++    // -------------------------------------------------------------------------
+++    // Helpers
+++    // -------------------------------------------------------------------------
+++
+++    public function itemTypeLabel(): string
+++    {
+++        return match ($this->item_type) {
+++            'subscription'  => 'Subscription',
+++            'installation'  => 'Installation',
+++            'addon'         => 'Add-on',
+++            'discount'      => 'Discount',
+++            'adjustment'    => 'Adjustment',
+++            default         => ucfirst($this->item_type),
+++        };
+++    }
+++}
++diff --git a/app/Models/PaymentAllocation.php b/app/Models/PaymentAllocation.php
++new file mode 100644
++index 0000000..482b475
++--- /dev/null
+++++ b/app/Models/PaymentAllocation.php
++@@ -0,0 +1,14 @@
+++<?php
+++
+++namespace App\Models;
+++
+++use Illuminate\Database\Eloquent\Model;
+++
+++/**
+++ * PaymentAllocation — Billing module (stub).
+++ * Full implementation is part of the Payment module story.
+++ */
+++class PaymentAllocation extends Model
+++{
+++    protected $fillable = ['payment_id', 'invoice_id', 'amount'];
+++}
++diff --git a/app/Policies/InvoicePolicy.php b/app/Policies/InvoicePolicy.php
++new file mode 100644
++index 0000000..64b0cfb
++--- /dev/null
+++++ b/app/Policies/InvoicePolicy.php
++@@ -0,0 +1,64 @@
+++<?php
+++
+++namespace App\Policies;
+++
+++use App\Models\Invoice;
+++use App\Models\User;
+++
+++/**
+++ * InvoicePolicy — Billing module.
+++ *
+++ * Governs authorization for invoice lifecycle operations.
+++ * Super Administrators bypass all checks via the before() gate hook.
+++ */
+++class InvoicePolicy
+++{
+++    public function before(User $user, string $ability): ?bool
+++    {
+++        if ($user->hasRole('super-admin')) {
+++            return true;
+++        }
+++
+++        return null;
+++    }
+++
+++    public function viewAny(User $user): bool
+++    {
+++        return $user->hasPermission('billing.view');
+++    }
+++
+++    public function view(User $user, Invoice $invoice): bool
+++    {
+++        return $user->hasPermission('billing.view');
+++    }
+++
+++    public function create(User $user): bool
+++    {
+++        return $user->hasPermission('billing.generate');
+++    }
+++
+++    public function update(User $user, Invoice $invoice): bool
+++    {
+++        return $user->hasPermission('billing.generate');
+++    }
+++
+++    public function publish(User $user, Invoice $invoice): bool
+++    {
+++        return $user->hasPermission('billing.publish');
+++    }
+++
+++    public function cancel(User $user, Invoice $invoice): bool
+++    {
+++        return $user->hasPermission('billing.void');
+++    }
+++
+++    public function delete(User $user, Invoice $invoice): bool
+++    {
+++        return $user->hasPermission('billing.void');
+++    }
+++
+++    public function export(User $user): bool
+++    {
+++        return $user->hasPermission('billing.export');
+++    }
+++}
++diff --git a/app/Providers/AuthServiceProvider.php b/app/Providers/AuthServiceProvider.php
++index 263eb9b..7749eee 100644
++--- a/app/Providers/AuthServiceProvider.php
+++++ b/app/Providers/AuthServiceProvider.php
++@@ -19,6 +19,7 @@ class AuthServiceProvider extends ServiceProvider
++         \App\Models\Setting::class    => \App\Policies\SettingPolicy::class,
++         \App\Models\Customer::class     => \App\Policies\CustomerPolicy::class,
++         \App\Models\Subscription::class  => \App\Policies\SubscriptionPolicy::class,
+++        \App\Models\Invoice::class       => \App\Policies\InvoicePolicy::class,
++     ];
++ 
++     public function boot(): void
++diff --git a/app/Services/Billing/InvoiceService.php b/app/Services/Billing/InvoiceService.php
++new file mode 100644
++index 0000000..ce47002
++--- /dev/null
+++++ b/app/Services/Billing/InvoiceService.php
++@@ -0,0 +1,356 @@
+++<?php
+++
+++namespace App\Services\Billing;
+++
+++use App\Domain\Events\InvoiceCancelled;
+++use App\Domain\Events\InvoiceGenerated;
+++use App\Domain\Events\InvoiceOverdue;
+++use App\Domain\Events\InvoicePublished;
+++use App\Enums\InvoiceStatus;
+++use App\Models\Customer;
+++use App\Models\Invoice;
+++use App\Models\InvoiceItem;
+++use App\Models\Subscription;
+++use App\Services\AbstractCrudService;
+++use Illuminate\Database\Eloquent\Builder;
+++use Illuminate\Support\Facades\DB;
+++use Illuminate\Support\Str;
+++use Illuminate\Validation\ValidationException;
+++
+++/**
+++ * InvoiceService — Billing module.
+++ *
+++ * Owns all invoice business logic, lifecycle transitions, and event dispatch.
+++ * Controllers delegate to this service and remain thin orchestrators.
+++ */
+++class InvoiceService extends AbstractCrudService
+++{
+++    protected string $modelClass = Invoice::class;
+++
+++    // ---------------------------------------------------------------------
+++    // CRUD
+++    // ---------------------------------------------------------------------
+++
+++    public function create(array $data): Invoice
+++    {
+++        return DB::transaction(function () use ($data) {
+++            $subscription = Subscription::lockForUpdate()->findOrFail($data['subscription_id']);
+++            $customer = Customer::lockForUpdate()->findOrFail($data['customer_id']);
+++
+++            if (!$subscription->isActive()) {
+++                throw ValidationException::withMessages([
+++                    'subscription_id' => 'Invoice generation requires an active subscription.',
+++                ]);
+++            }
+++
+++            if ($subscription->customer_id !== $customer->id) {
+++                throw ValidationException::withMessages([
+++                    'customer_id' => 'Customer and subscription must belong together.',
+++                ]);
+++            }
+++
+++            $this->assertPeriodUnique($subscription->id, $data['period_start'], $data['period_end']);
+++
+++            $invoice = Invoice::create([
+++                'invoice_number'     => $this->generateInvoiceNumber($data['issue_date'] ?? now()->toDateString()),
+++                'customer_id'        => $customer->id,
+++                'subscription_id'    => $subscription->id,
+++                'status'             => InvoiceStatus::Draft->value,
+++                'period_start'       => $data['period_start'],
+++                'period_end'         => $data['period_end'],
+++                'issue_date'         => $data['issue_date'],
+++                'due_date'           => $data['due_date'],
+++                'subtotal_amount'    => $data['subtotal_amount'] ?? 0,
+++                'tax_amount'         => $data['tax_amount'] ?? 0,
+++                'discount_amount'    => $data['discount_amount'] ?? 0,
+++                'total_amount'       => $data['total_amount'] ?? (($data['subtotal_amount'] ?? 0) + ($data['tax_amount'] ?? 0) - ($data['discount_amount'] ?? 0)),
+++                'paid_amount'        => 0,
+++                'balance_amount'     => $data['total_amount'] ?? (($data['subtotal_amount'] ?? 0) + ($data['tax_amount'] ?? 0) - ($data['discount_amount'] ?? 0)),
+++                'notes'              => $data['notes'] ?? null,
+++            ]);
+++
+++            foreach (($data['items'] ?? []) as $index => $item) {
+++                $invoice->items()->create([
+++                    'description'  => $item['description'],
+++                    'item_type'    => $item['item_type'] ?? 'subscription',
+++                    'quantity'     => $item['quantity'] ?? 1,
+++                    'unit_price'   => $item['unit_price'],
+++                    'total_amount' => ($item['quantity'] ?? 1) * $item['unit_price'],
+++                    'sort_order'   => $item['sort_order'] ?? $index,
+++                    'notes'        => $item['notes'] ?? null,
+++                ]);
+++            }
+++
+++            event(new InvoiceGenerated($invoice->id, $customer->id, $subscription->id, auth()->id()));
+++
+++            return $invoice->fresh(['customer', 'subscription', 'items']);
+++        });
+++    }
+++
+++    public function update($invoice, array $data): Invoice
+++    {
+++        return DB::transaction(function () use ($invoice, $data) {
+++            $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
+++
+++            if (!$invoice->isDraft()) {
+++                throw ValidationException::withMessages([
+++                    'status' => 'Only draft invoices may be edited.',
+++                ]);
+++            }
+++
+++            $invoice->update([
+++                'period_start'    => $data['period_start'] ?? $invoice->period_start,
+++                'period_end'      => $data['period_end'] ?? $invoice->period_end,
+++                'issue_date'      => $data['issue_date'] ?? $invoice->issue_date,
+++                'due_date'        => $data['due_date'] ?? $invoice->due_date,
+++                'tax_amount'      => $data['tax_amount'] ?? $invoice->tax_amount,
+++                'discount_amount' => $data['discount_amount'] ?? $invoice->discount_amount,
+++                'notes'           => $data['notes'] ?? $invoice->notes,
+++            ]);
+++
+++            return $invoice->fresh(['customer', 'subscription', 'items']);
+++        });
+++    }
+++
+++    public function delete($invoice): void
+++    {
+++        $this->cancel($invoice, 'Cancelled through destroy action.');
+++    }
+++
+++    // ---------------------------------------------------------------------
+++    // Lifecycle
+++    // ---------------------------------------------------------------------
+++
+++    public function publish(Invoice $invoice): Invoice
+++    {
+++        return DB::transaction(function () use ($invoice) {
+++            $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
+++
+++            if (!$invoice->isDraft()) {
+++                throw ValidationException::withMessages([
+++                    'status' => 'Only draft invoices may be published.',
+++                ]);
+++            }
+++
+++            if ($invoice->items()->count() === 0) {
+++                throw ValidationException::withMessages([
+++                    'items' => 'Invoice must contain at least one invoice item before publication.',
+++                ]);
+++            }
+++
+++            if ($invoice->total_amount <= 0) {
+++                throw ValidationException::withMessages([
+++                    'total_amount' => 'Invoice total must be positive before publication.',
+++                ]);
+++            }
+++
+++            $invoice->update([
+++                'status'       => InvoiceStatus::Published->value,
+++                'published_at' => $invoice->published_at ?? now(),
+++            ]);
+++
+++            event(new InvoicePublished(
+++                $invoice->id,
+++                $invoice->customer_id,
+++                $invoice->subscription_id,
+++                (float) $invoice->total_amount,
+++                auth()->id()
+++            ));
+++
+++            return $invoice->fresh(['customer', 'subscription', 'items']);
+++        });
+++    }
+++
+++    public function cancel(Invoice $invoice, string $reason): Invoice
+++    {
+++        return DB::transaction(function () use ($invoice, $reason) {
+++            $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
+++
+++            if (!$invoice->isDraft()) {
+++                throw ValidationException::withMessages([
+++                    'status' => 'Only draft invoices may be cancelled.',
+++                ]);
+++            }
+++
+++            $invoice->update([
+++                'status'               => InvoiceStatus::Cancelled->value,
+++                'cancelled_at'         => now(),
+++                'cancellation_reason'  => $reason,
+++            ]);
+++
+++            event(new InvoiceCancelled(
+++                $invoice->id,
+++                $invoice->customer_id,
+++                $invoice->subscription_id,
+++                $reason,
+++                auth()->id()
+++            ));
+++
+++            return $invoice->fresh(['customer', 'subscription', 'items']);
+++        });
+++    }
+++
+++    public function markOverdue(Invoice $invoice): Invoice
+++    {
+++        return DB::transaction(function () use ($invoice) {
+++            $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
+++
+++            if (!in_array($invoice->status, [InvoiceStatus::Published, InvoiceStatus::PartiallyPaid], true)) {
+++                throw ValidationException::withMessages([
+++                    'status' => 'Only published or partially paid invoices may become overdue.',
+++                ]);
+++            }
+++
+++            $invoice->update([
+++                'status'     => InvoiceStatus::Overdue->value,
+++                'overdue_at' => $invoice->overdue_at ?? now(),
+++            ]);
+++
+++            event(new InvoiceOverdue(
+++                $invoice->id,
+++                $invoice->customer_id,
+++                $invoice->subscription_id,
+++                (float) $invoice->balance_amount
+++            ));
+++
+++            return $invoice->fresh(['customer', 'subscription', 'items']);
+++        });
+++    }
+++
+++    public function recordPaymentAllocation(Invoice $invoice, float $amount): Invoice
+++    {
+++        return DB::transaction(function () use ($invoice, $amount) {
+++            $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
+++
+++            if (!$invoice->isPayable() && !$invoice->isPartiallyPaid()) {
+++                throw ValidationException::withMessages([
+++                    'status' => 'Payment allocations may only be recorded against payable invoices.',
+++                ]);
+++            }
+++
+++            $paidAmount = (float) $invoice->paid_amount + $amount;
+++            $balanceAmount = max(0, (float) $invoice->total_amount - $paidAmount);
+++            $status = $balanceAmount <= 0 ? InvoiceStatus::Paid->value : InvoiceStatus::PartiallyPaid->value;
+++
+++            $invoice->update([
+++                'paid_amount'    => $paidAmount,
+++                'balance_amount' => $balanceAmount,
+++                'status'         => $status,
+++            ]);
+++
+++            return $invoice->fresh(['customer', 'subscription', 'items']);
+++        });
+++    }
+++
+++    // ---------------------------------------------------------------------
+++    // View Builders
+++    // ---------------------------------------------------------------------
+++
+++    public function buildIndexData(array $filters = [], int $perPage = 25): array
+++    {
+++        return [
+++            'invoices' => $this->paginate($filters, $perPage),
+++            'statuses' => InvoiceStatus::cases(),
+++            'filters'  => $filters,
+++        ];
+++    }
+++
+++    public function buildCreateData(): array
+++    {
+++        return [
+++            'statuses' => InvoiceStatus::cases(),
+++        ];
+++    }
+++
+++    public function buildEditData(Invoice $invoice): array
+++    {
+++        $invoice->loadMissing(['customer', 'subscription', 'items']);
+++
+++        return [
+++            'invoice'  => $invoice,
+++            'statuses' => InvoiceStatus::cases(),
+++        ];
+++    }
+++
+++    public function findForShow(Invoice $invoice): array
+++    {
+++        $invoice->loadMissing(['customer', 'subscription', 'items']);
+++
+++        return [
+++            'invoice' => $invoice,
+++        ];
+++    }
+++
+++    // ---------------------------------------------------------------------
+++    // AbstractCrudService Hooks
+++    // ---------------------------------------------------------------------
+++
+++    protected function applyDefaultRelationships(Builder $query): Builder
+++    {
+++        return $query->with(['customer', 'subscription']);
+++    }
+++
+++    protected function applyFilters(Builder $query, array $filters): Builder
+++    {
+++        if (!empty($filters['search'])) {
+++            $search = $filters['search'];
+++            $query->where(function (Builder $q) use ($search) {
+++                $q->where('invoice_number', 'like', "%{$search}%")
+++                  ->orWhereHas('customer', function (Builder $customerQuery) use ($search) {
+++                      $customerQuery->where('name', 'like', "%{$search}%")
+++                          ->orWhere('customer_number', 'like', "%{$search}%");
+++                  });
+++            });
+++        }
+++
+++        if (!empty($filters['status'])) {
+++            $query->where('status', $filters['status']);
+++        }
+++
+++        if (!empty($filters['customer_id'])) {
+++            $query->where('customer_id', $filters['customer_id']);
+++        }
+++
+++        return $query;
+++    }
+++
+++    protected function applyDefaultOrdering(Builder $query): Builder
+++    {
+++        return $query->orderByDesc('issue_date')->orderByDesc('id');
+++    }
+++
+++    // ---------------------------------------------------------------------
+++    // Helpers
+++    // ---------------------------------------------------------------------
+++
+++    private function generateInvoiceNumber(string $issueDate): string
+++    {
+++        $prefix = 'INV-' . date('Ym', strtotime($issueDate)) . '-';
+++        $latest = Invoice::lockForUpdate()
+++            ->where('invoice_number', 'like', $prefix . '%')
+++            ->orderByDesc('invoice_number')
+++            ->value('invoice_number');
+++
+++        if (!$latest) {
+++            return $prefix . '000001';
+++        }
+++
+++        $sequence = (int) substr($latest, -6);
+++
+++        return $prefix . str_pad((string) ($sequence + 1), 6, '0', STR_PAD_LEFT);
+++    }
+++
+++    private function assertPeriodUnique(int $subscriptionId, string $periodStart, string $periodEnd): void
+++    {
+++        $exists = Invoice::where('subscription_id', $subscriptionId)
+++            ->whereDate('period_start', $periodStart)
+++            ->whereDate('period_end', $periodEnd)
+++            ->exists();
+++
+++        if ($exists) {
+++            throw ValidationException::withMessages([
+++                'subscription_id' => 'An invoice already exists for this subscription and billing period.',
+++            ]);
+++        }
+++    }
+++}
++diff --git a/config/adminlte.php b/config/adminlte.php
++index 04a3e30..ccdf176 100644
++--- a/config/adminlte.php
+++++ b/config/adminlte.php
++@@ -352,6 +352,14 @@
++             'icon' => 'fas fa-fw fa-wifi',
++         ],
++ 
+++        // Billing Management
+++        ['header' => 'BILLING'],
+++        [
+++            'text' => 'Invoices',
+++            'url'  => 'invoices',
+++            'icon' => 'fas fa-fw fa-file-invoice-dollar',
+++        ],
+++
++         // Account
++         ['header' => 'ACCOUNT'],
++         [
++diff --git a/database/factories/InvoiceFactory.php b/database/factories/InvoiceFactory.php
++new file mode 100644
++index 0000000..260c1ac
++--- /dev/null
+++++ b/database/factories/InvoiceFactory.php
++@@ -0,0 +1,87 @@
+++<?php
+++
+++namespace Database\Factories;
+++
+++use App\Enums\InvoiceStatus;
+++use App\Models\Invoice;
+++use Illuminate\Database\Eloquent\Factories\Factory;
+++
+++/**
+++ * @extends Factory<Invoice>
+++ */
+++class InvoiceFactory extends Factory
+++{
+++    protected $model = Invoice::class;
+++
+++    public function definition(): array
+++    {
+++        $issueDate = $this->faker->dateTimeBetween('-3 months', 'now');
+++        $dueDate = (clone $issueDate)->modify('+15 days');
+++        $total = $this->faker->randomFloat(2, 100, 500);
+++
+++        return [
+++            'invoice_number'     => 'INV-' . now()->format('Ym') . '-' . str_pad((string) $this->faker->numberBetween(1, 999999), 6, '0', STR_PAD_LEFT),
+++            'customer_id'        => null,
+++            'subscription_id'    => null,
+++            'status'             => InvoiceStatus::Draft->value,
+++            'period_start'       => $issueDate->format('Y-m-d'),
+++            'period_end'         => (clone $issueDate)->modify('+30 days')->format('Y-m-d'),
+++            'issue_date'         => $issueDate->format('Y-m-d'),
+++            'due_date'           => $dueDate->format('Y-m-d'),
+++            'subtotal_amount'    => $total,
+++            'tax_amount'         => 0,
+++            'discount_amount'    => 0,
+++            'total_amount'       => $total,
+++            'paid_amount'        => 0,
+++            'balance_amount'     => $total,
+++            'published_at'       => null,
+++            'overdue_at'         => null,
+++            'cancelled_at'       => null,
+++            'cancellation_reason'=> null,
+++            'notes'              => null,
+++        ];
+++    }
+++
+++    public function published(): static
+++    {
+++        return $this->state(fn () => [
+++            'status'       => InvoiceStatus::Published->value,
+++            'published_at'  => now(),
+++        ]);
+++    }
+++
+++    public function overdue(): static
+++    {
+++        return $this->state(fn () => [
+++            'status'      => InvoiceStatus::Overdue->value,
+++            'overdue_at'  => now(),
+++        ]);
+++    }
+++
+++    public function partiallyPaid(): static
+++    {
+++        return $this->state(fn (array $attributes) => [
+++            'status'         => InvoiceStatus::PartiallyPaid->value,
+++            'paid_amount'    => $attributes['total_amount'] / 2,
+++            'balance_amount' => $attributes['total_amount'] / 2,
+++        ]);
+++    }
+++
+++    public function paid(): static
+++    {
+++        return $this->state(fn (array $attributes) => [
+++            'status'         => InvoiceStatus::Paid->value,
+++            'paid_amount'    => $attributes['total_amount'],
+++            'balance_amount' => 0,
+++        ]);
+++    }
+++
+++    public function cancelled(): static
+++    {
+++        return $this->state(fn () => [
+++            'status'               => InvoiceStatus::Cancelled->value,
+++            'cancelled_at'         => now(),
+++            'cancellation_reason'  => 'Test cancellation',
+++        ]);
+++    }
+++}
++diff --git a/resources/views/invoices/create.blade.php b/resources/views/invoices/create.blade.php
++new file mode 100644
++index 0000000..f5efd0a
++--- /dev/null
+++++ b/resources/views/invoices/create.blade.php
++@@ -0,0 +1,50 @@
+++@extends('adminlte::page')
+++
+++@section('title', 'Create Invoice')
+++
+++@section('content_header')
+++    <h1>Create Invoice</h1>
+++@stop
+++
+++@section('content')
+++    @if ($errors->any())
+++        <div class="alert alert-danger alert-dismissible">
+++            <button type="button" class="close" data-dismiss="alert">&times;</button>
+++            <ul class="mb-0">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+++        </div>
+++    @endif
+++
+++    <form method="POST" action="{{ route('invoices.store') }}">
+++        @csrf
+++        <div class="card card-outline card-primary">
+++            <div class="card-body">
+++                <div class="row">
+++                    <div class="col-md-6">
+++                        <div class="form-group">
+++                            <label>Customer ID</label>
+++                            <input type="number" name="customer_id" value="{{ old('customer_id') }}" class="form-control" required>
+++                        </div>
+++                    </div>
+++                    <div class="col-md-6">
+++                        <div class="form-group">
+++                            <label>Subscription ID</label>
+++                            <input type="number" name="subscription_id" value="{{ old('subscription_id') }}" class="form-control" required>
+++                        </div>
+++                    </div>
+++                    <div class="col-md-4"><div class="form-group"><label>Period Start</label><input type="date" name="period_start" value="{{ old('period_start') }}" class="form-control" required></div></div>
+++                    <div class="col-md-4"><div class="form-group"><label>Period End</label><input type="date" name="period_end" value="{{ old('period_end') }}" class="form-control" required></div></div>
+++                    <div class="col-md-4"><div class="form-group"><label>Issue Date</label><input type="date" name="issue_date" value="{{ old('issue_date', now()->toDateString()) }}" class="form-control" required></div></div>
+++                    <div class="col-md-4"><div class="form-group"><label>Due Date</label><input type="date" name="due_date" value="{{ old('due_date') }}" class="form-control" required></div></div>
+++                    <div class="col-md-4"><div class="form-group"><label>Subtotal</label><input type="number" step="0.01" name="subtotal_amount" value="{{ old('subtotal_amount', 0) }}" class="form-control"></div></div>
+++                    <div class="col-md-4"><div class="form-group"><label>Tax</label><input type="number" step="0.01" name="tax_amount" value="{{ old('tax_amount', 0) }}" class="form-control"></div></div>
+++                    <div class="col-md-4"><div class="form-group"><label>Discount</label><input type="number" step="0.01" name="discount_amount" value="{{ old('discount_amount', 0) }}" class="form-control"></div></div>
+++                    <div class="col-md-12"><div class="form-group"><label>Notes</label><textarea name="notes" rows="4" class="form-control">{{ old('notes') }}</textarea></div></div>
+++                </div>
+++            </div>
+++            <div class="card-footer d-flex justify-content-between">
+++                <a href="{{ route('invoices.index') }}" class="btn btn-secondary">Cancel</a>
+++                <button class="btn btn-primary">Generate Invoice</button>
+++            </div>
+++        </div>
+++    </form>
+++@stop
++diff --git a/resources/views/invoices/edit.blade.php b/resources/views/invoices/edit.blade.php
++new file mode 100644
++index 0000000..afadd22
++--- /dev/null
+++++ b/resources/views/invoices/edit.blade.php
++@@ -0,0 +1,41 @@
+++@extends('adminlte::page')
+++
+++@section('title', 'Edit Invoice')
+++
+++@section('content_header')
+++    <h1>Edit Invoice {{ $invoice->invoice_number }}</h1>
+++@stop
+++
+++@section('content')
+++    @if ($errors->any())
+++        <div class="alert alert-danger alert-dismissible">
+++            <button type="button" class="close" data-dismiss="alert">&times;</button>
+++            <ul class="mb-0">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+++        </div>
+++    @endif
+++
+++    <form method="POST" action="{{ route('invoices.update', $invoice) }}">
+++        @csrf
+++        @method('PUT')
+++        <div class="card card-outline card-warning">
+++            <div class="card-body">
+++                <div class="row">
+++                    <div class="col-md-12">
+++                        <div class="alert alert-info">Only draft invoices may be edited.</div>
+++                    </div>
+++                    <div class="col-md-4"><div class="form-group"><label>Period Start</label><input type="date" name="period_start" value="{{ old('period_start', optional($invoice->period_start)->format('Y-m-d')) }}" class="form-control" required></div></div>
+++                    <div class="col-md-4"><div class="form-group"><label>Period End</label><input type="date" name="period_end" value="{{ old('period_end', optional($invoice->period_end)->format('Y-m-d')) }}" class="form-control" required></div></div>
+++                    <div class="col-md-4"><div class="form-group"><label>Issue Date</label><input type="date" name="issue_date" value="{{ old('issue_date', optional($invoice->issue_date)->format('Y-m-d')) }}" class="form-control" required></div></div>
+++                    <div class="col-md-4"><div class="form-group"><label>Due Date</label><input type="date" name="due_date" value="{{ old('due_date', optional($invoice->due_date)->format('Y-m-d')) }}" class="form-control" required></div></div>
+++                    <div class="col-md-4"><div class="form-group"><label>Tax</label><input type="number" step="0.01" name="tax_amount" value="{{ old('tax_amount', $invoice->tax_amount) }}" class="form-control"></div></div>
+++                    <div class="col-md-4"><div class="form-group"><label>Discount</label><input type="number" step="0.01" name="discount_amount" value="{{ old('discount_amount', $invoice->discount_amount) }}" class="form-control"></div></div>
+++                    <div class="col-md-12"><div class="form-group"><label>Notes</label><textarea name="notes" rows="4" class="form-control">{{ old('notes', $invoice->notes) }}</textarea></div></div>
+++                </div>
+++            </div>
+++            <div class="card-footer d-flex justify-content-between">
+++                <a href="{{ route('invoices.show', $invoice) }}" class="btn btn-secondary">Cancel</a>
+++                <button class="btn btn-warning">Save Changes</button>
+++            </div>
+++        </div>
+++    </form>
+++@stop
++diff --git a/resources/views/invoices/index.blade.php b/resources/views/invoices/index.blade.php
++new file mode 100644
++index 0000000..890559c
++--- /dev/null
+++++ b/resources/views/invoices/index.blade.php
++@@ -0,0 +1,93 @@
+++@extends('adminlte::page')
+++
+++@section('title', 'Invoices')
+++
+++@section('content_header')
+++    <div class="d-flex justify-content-between align-items-center">
+++        <h1>Invoices</h1>
+++        @can('create', \App\Models\Invoice::class)
+++            <a href="{{ route('invoices.create') }}" class="btn btn-primary btn-sm">
+++                <i class="fas fa-plus mr-1"></i> New Invoice
+++            </a>
+++        @endcan
+++    </div>
+++@stop
+++
+++@section('content')
+++    @if (session('success'))
+++        <div class="alert alert-success alert-dismissible">
+++            <button type="button" class="close" data-dismiss="alert">&times;</button>
+++            {{ session('success') }}
+++        </div>
+++    @endif
+++
+++    <div class="card card-outline card-primary">
+++        <div class="card-header">
+++            <h3 class="card-title">Search &amp; Filter</h3>
+++        </div>
+++        <div class="card-body">
+++            <form method="GET" action="{{ route('invoices.index') }}" class="form-inline flex-wrap" style="gap:.5rem">
+++                <input type="text" name="search" class="form-control form-control-sm" placeholder="Invoice number or customer…" value="{{ request('search') }}">
+++                <select name="status" class="form-control form-control-sm">
+++                    <option value="">All Statuses</option>
+++                    @foreach ($statuses as $status)
+++                        <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>{{ $status->label() }}</option>
+++                    @endforeach
+++                </select>
+++                <button type="submit" class="btn btn-sm btn-secondary"><i class="fas fa-search mr-1"></i> Search</button>
+++                <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+++            </form>
+++        </div>
+++    </div>
+++
+++    <div class="card">
+++        <div class="card-body p-0">
+++            <table class="table table-striped table-hover mb-0">
+++                <thead class="thead-light">
+++                    <tr>
+++                        <th>Invoice</th>
+++                        <th>Customer</th>
+++                        <th>Subscription</th>
+++                        <th>Status</th>
+++                        <th>Period</th>
+++                        <th>Due</th>
+++                        <th class="text-right">Total</th>
+++                        <th class="text-right">Balance</th>
+++                        <th class="text-right">Actions</th>
+++                    </tr>
+++                </thead>
+++                <tbody>
+++                    @forelse ($invoices as $invoice)
+++                        <tr>
+++                            <td><a href="{{ route('invoices.show', $invoice) }}">{{ $invoice->invoice_number }}</a></td>
+++                            <td>
+++                                <a href="{{ route('customers.show', $invoice->customer) }}">{{ $invoice->customer?->name }}</a>
+++                                <small class="text-muted d-block">{{ $invoice->customer?->customer_number }}</small>
+++                            </td>
+++                            <td>
+++                                <a href="{{ route('subscriptions.show', $invoice->subscription) }}">Subscription #{{ $invoice->subscription_id }}</a>
+++                            </td>
+++                            <td><span class="badge badge-{{ $invoice->status->badgeColor() }}">{{ $invoice->status->label() }}</span></td>
+++                            <td>{{ $invoice->period_start?->format('d M Y') }} - {{ $invoice->period_end?->format('d M Y') }}</td>
+++                            <td>{{ $invoice->due_date?->format('d M Y') }}</td>
+++                            <td class="text-right">{{ number_format((float) $invoice->total_amount, 2) }}</td>
+++                            <td class="text-right">{{ number_format((float) $invoice->balance_amount, 2) }}</td>
+++                            <td class="text-right">
+++                                <a href="{{ route('invoices.show', $invoice) }}" class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
+++                                @can('update', $invoice)
+++                                    @if ($invoice->isDraft())
+++                                        <a href="{{ route('invoices.edit', $invoice) }}" class="btn btn-xs btn-warning"><i class="fas fa-edit"></i></a>
+++                                    @endif
+++                                @endcan
+++                            </td>
+++                        </tr>
+++                    @empty
+++                        <tr><td colspan="9" class="text-center text-muted py-4">No invoices found.</td></tr>
+++                    @endforelse
+++                </tbody>
+++            </table>
+++        </div>
+++    </div>
+++
+++    <div class="d-flex justify-content-end">{{ $invoices->links() }}</div>
+++@stop
++diff --git a/resources/views/invoices/show.blade.php b/resources/views/invoices/show.blade.php
++new file mode 100644
++index 0000000..0ea2da8
++--- /dev/null
+++++ b/resources/views/invoices/show.blade.php
++@@ -0,0 +1,163 @@
+++@extends('adminlte::page')
+++
+++@section('title', 'Invoice ' . $invoice->invoice_number)
+++
+++@section('content_header')
+++    <div class="d-flex justify-content-between align-items-center">
+++        <div>
+++            <h1 class="mb-0">Invoice {{ $invoice->invoice_number }}</h1>
+++            <small class="text-muted">
+++                {{ $invoice->customer?->customer_number }} — {{ $invoice->customer?->name }}
+++            </small>
+++        </div>
+++        <div class="d-flex align-items-center" style="gap:.5rem">
+++            @can('publish', $invoice)
+++                @if ($invoice->isDraft())
+++                    <form method="POST" action="{{ route('invoices.publish', $invoice) }}">
+++                        @csrf
+++                        <button class="btn btn-sm btn-success"><i class="fas fa-check mr-1"></i> Publish</button>
+++                    </form>
+++                @endif
+++            @endcan
+++
+++            @can('cancel', $invoice)
+++                @if ($invoice->isDraft())
+++                    <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#cancelModal">
+++                        <i class="fas fa-times mr-1"></i> Cancel
+++                    </button>
+++                @endif
+++            @endcan
+++
+++            @can('update', $invoice)
+++                @if ($invoice->isDraft())
+++                    <a href="{{ route('invoices.edit', $invoice) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit mr-1"></i> Edit</a>
+++                @endif
+++            @endcan
+++
+++            <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left mr-1"></i> Back</a>
+++        </div>
+++    </div>
+++@stop
+++
+++@section('content')
+++    @if (session('success'))
+++        <div class="alert alert-success alert-dismissible">
+++            <button type="button" class="close" data-dismiss="alert">&times;</button>
+++            {{ session('success') }}
+++        </div>
+++    @endif
+++    @if ($errors->any())
+++        <div class="alert alert-danger alert-dismissible">
+++            <button type="button" class="close" data-dismiss="alert">&times;</button>
+++            <ul class="mb-0">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+++        </div>
+++    @endif
+++
+++    <div class="row">
+++        <div class="col-md-3">
+++            <div class="card card-primary card-outline">
+++                <div class="card-body">
+++                    <p class="text-center mb-2">
+++                        <span class="badge badge-{{ $invoice->status->badgeColor() }} badge-lg px-3 py-2" style="font-size:1rem">{{ $invoice->status->label() }}</span>
+++                    </p>
+++                    <ul class="list-group list-group-unbordered mt-3">
+++                        <li class="list-group-item px-0"><b>Customer</b><span class="float-right"><a href="{{ route('customers.show', $invoice->customer) }}">{{ $invoice->customer?->name }}</a></span></li>
+++                        <li class="list-group-item px-0"><b>Subscription</b><span class="float-right"><a href="{{ route('subscriptions.show', $invoice->subscription) }}">#{{ $invoice->subscription_id }}</a></span></li>
+++                        <li class="list-group-item px-0"><b>Period</b><span class="float-right">{{ $invoice->period_start?->format('d M Y') }} - {{ $invoice->period_end?->format('d M Y') }}</span></li>
+++                        <li class="list-group-item px-0"><b>Due Date</b><span class="float-right">{{ $invoice->due_date?->format('d M Y') }}</span></li>
+++                        <li class="list-group-item px-0"><b>Total</b><span class="float-right">{{ number_format((float) $invoice->total_amount, 2) }}</span></li>
+++                        <li class="list-group-item px-0"><b>Balance</b><span class="float-right">{{ number_format((float) $invoice->balance_amount, 2) }}</span></li>
+++                    </ul>
+++                </div>
+++            </div>
+++        </div>
+++
+++        <div class="col-md-9">
+++            <div class="card card-outline card-primary">
+++                <div class="card-header p-0 border-bottom-0">
+++                    <ul class="nav nav-tabs" id="invoice-tabs" role="tablist">
+++                        <li class="nav-item"><a class="nav-link active" data-toggle="pill" href="#overview">Overview</a></li>
+++                        <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#items">Items</a></li>
+++                        <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#timeline">Timeline</a></li>
+++                        <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#attachments">Attachments</a></li>
+++                    </ul>
+++                </div>
+++                <div class="card-body tab-content">
+++                    <div class="tab-pane fade show active" id="overview">
+++                        <div class="row">
+++                            <div class="col-md-6">
+++                                <h5>Billing Snapshot</h5>
+++                                <dl class="row mb-0">
+++                                    <dt class="col-sm-4">Invoice Number</dt><dd class="col-sm-8">{{ $invoice->invoice_number }}</dd>
+++                                    <dt class="col-sm-4">Issue Date</dt><dd class="col-sm-8">{{ $invoice->issue_date?->format('d M Y') }}</dd>
+++                                    <dt class="col-sm-4">Published At</dt><dd class="col-sm-8">{{ $invoice->published_at?->format('d M Y H:i') ?? '—' }}</dd>
+++                                    <dt class="col-sm-4">Overdue At</dt><dd class="col-sm-8">{{ $invoice->overdue_at?->format('d M Y H:i') ?? '—' }}</dd>
+++                                </dl>
+++                            </div>
+++                            <div class="col-md-6">
+++                                <h5>Financial Summary</h5>
+++                                <dl class="row mb-0">
+++                                    <dt class="col-sm-4">Subtotal</dt><dd class="col-sm-8">{{ number_format((float) $invoice->subtotal_amount, 2) }}</dd>
+++                                    <dt class="col-sm-4">Tax</dt><dd class="col-sm-8">{{ number_format((float) $invoice->tax_amount, 2) }}</dd>
+++                                    <dt class="col-sm-4">Discount</dt><dd class="col-sm-8">{{ number_format((float) $invoice->discount_amount, 2) }}</dd>
+++                                    <dt class="col-sm-4">Paid</dt><dd class="col-sm-8">{{ number_format((float) $invoice->paid_amount, 2) }}</dd>
+++                                    <dt class="col-sm-4">Balance</dt><dd class="col-sm-8">{{ number_format((float) $invoice->balance_amount, 2) }}</dd>
+++                                </dl>
+++                            </div>
+++                        </div>
+++                    </div>
+++                    <div class="tab-pane fade" id="items">
+++                        <div class="table-responsive">
+++                            <table class="table table-sm table-bordered mb-0">
+++                                <thead class="thead-light">
+++                                    <tr><th>Sort</th><th>Description</th><th>Type</th><th class="text-right">Qty</th><th class="text-right">Unit</th><th class="text-right">Total</th></tr>
+++                                </thead>
+++                                <tbody>
+++                                    @forelse ($invoice->items as $item)
+++                                        <tr>
+++                                            <td>{{ $item->sort_order }}</td>
+++                                            <td>{{ $item->description }}</td>
+++                                            <td>{{ $item->itemTypeLabel() }}</td>
+++                                            <td class="text-right">{{ $item->quantity }}</td>
+++                                            <td class="text-right">{{ number_format((float) $item->unit_price, 2) }}</td>
+++                                            <td class="text-right">{{ number_format((float) $item->total_amount, 2) }}</td>
+++                                        </tr>
+++                                    @empty
+++                                        <tr><td colspan="6" class="text-center text-muted">No invoice items.</td></tr>
+++                                    @endforelse
+++                                </tbody>
+++                            </table>
+++                        </div>
+++                    </div>
+++                    <div class="tab-pane fade" id="timeline">
+++                        <div class="alert alert-light border mb-0">Timeline integration will render here once the Timeline module is wired.</div>
+++                    </div>
+++                    <div class="tab-pane fade" id="attachments">
+++                        <div class="alert alert-light border mb-0">Attachments will render here once shared attachments are wired.</div>
+++                    </div>
+++                </div>
+++            </div>
+++        </div>
+++    </div>
+++
+++    <div class="modal fade" id="cancelModal" tabindex="-1" role="dialog" aria-hidden="true">
+++        <div class="modal-dialog" role="document">
+++            <div class="modal-content">
+++                <form method="POST" action="{{ route('invoices.cancel', $invoice) }}">
+++                    @csrf
+++                    <div class="modal-header"><h5 class="modal-title">Cancel Invoice</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+++                    <div class="modal-body">
+++                        <div class="form-group">
+++                            <label>Cancellation reason</label>
+++                            <textarea name="cancellation_reason" class="form-control" rows="4" required></textarea>
+++                        </div>
+++                    </div>
+++                    <div class="modal-footer">
+++                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+++                        <button type="submit" class="btn btn-danger">Cancel Invoice</button>
+++                    </div>
+++                </form>
+++            </div>
+++        </div>
+++    </div>
+++@stop
++diff --git a/routes/web.php b/routes/web.php
++index 44f55af..d207a46 100644
++--- a/routes/web.php
+++++ b/routes/web.php
++@@ -1,6 +1,7 @@
++ <?php
++ 
++ use App\Http\Controllers\CustomerController;
+++use App\Http\Controllers\InvoiceController;
++ use App\Http\Controllers\PermissionController;
++ use App\Http\Controllers\SubscriptionController;
++ use App\Http\Controllers\ProfileController;
++@@ -24,6 +25,13 @@
++     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
++     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
++ 
+++    // -------------------------------------------------------------------------
+++    // Billing Management
+++    // -------------------------------------------------------------------------
+++    Route::resource('invoices', InvoiceController::class)->except(['destroy']);
+++    Route::post('invoices/{invoice}/publish', [InvoiceController::class, 'publish'])->name('invoices.publish');
+++    Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+++
++     // -------------------------------------------------------------------------
++     // Subscription Management
++     // -------------------------------------------------------------------------
++diff --git a/tests/Feature/InvoiceControllerTest.php b/tests/Feature/InvoiceControllerTest.php
++new file mode 100644
++index 0000000..1b5b8cc
++--- /dev/null
+++++ b/tests/Feature/InvoiceControllerTest.php
++@@ -0,0 +1,231 @@
+++<?php
+++
+++namespace Tests\Feature;
+++
+++use App\Enums\CustomerStatus;
+++use App\Enums\InvoiceStatus;
+++use App\Enums\SubscriptionStatus;
+++use App\Enums\SubscriptionType;
+++use App\Models\Customer;
+++use App\Models\Invoice;
+++use App\Models\Package;
+++use App\Models\Role;
+++use App\Models\Subscription;
+++use App\Models\User;
+++use Illuminate\Foundation\Testing\RefreshDatabase;
+++use Tests\TestCase;
+++
+++class InvoiceControllerTest extends TestCase
+++{
+++    use RefreshDatabase;
+++
+++    private function adminUser(): User
+++    {
+++        $user = User::factory()->create(['status' => 'active']);
+++        $role = Role::factory()->create(['slug' => 'super-admin', 'status' => 'active']);
+++        $user->roles()->attach($role);
+++
+++        return $user;
+++    }
+++
+++    private function activeSubscription(): Subscription
+++    {
+++        $customer = Customer::factory()->create(['status' => CustomerStatus::Active->value]);
+++        $package = Package::create([
+++            'name' => 'Basic Plan',
+++            'monthly_price' => 100,
+++            'downstream_kbps' => 1000,
+++            'upstream_kbps' => 500,
+++        ]);
+++
+++        return Subscription::factory()->active()->create([
+++            'customer_id' => $customer->id,
+++            'package_id' => $package->id,
+++            'subscription_type' => SubscriptionType::Primary->value,
+++        ]);
+++    }
+++
+++    private function invoicePayload(Subscription $subscription, array $overrides = []): array
+++    {
+++        $issueDate = now()->toDateString();
+++        return array_merge([
+++            'customer_id' => $subscription->customer_id,
+++            'subscription_id' => $subscription->id,
+++            'period_start' => now()->startOfMonth()->toDateString(),
+++            'period_end' => now()->endOfMonth()->toDateString(),
+++            'issue_date' => $issueDate,
+++            'due_date' => now()->addDays(15)->toDateString(),
+++            'subtotal_amount' => 100,
+++            'tax_amount' => 0,
+++            'discount_amount' => 0,
+++            'notes' => 'Test invoice',
+++            'items' => [
+++                [
+++                    'description' => 'Monthly subscription',
+++                    'item_type' => 'subscription',
+++                    'quantity' => 1,
+++                    'unit_price' => 100,
+++                    'total_amount' => 100,
+++                    'sort_order' => 0,
+++                ],
+++            ],
+++        ], $overrides);
+++    }
+++
+++    public function test_index_requires_authentication(): void
+++    {
+++        $this->get(route('invoices.index'))->assertRedirect(route('login'));
+++    }
+++
+++    public function test_admin_can_view_invoice_index(): void
+++    {
+++        $user = $this->adminUser();
+++        $this->actingAs($user)
+++            ->get(route('invoices.index'))
+++            ->assertOk()
+++            ->assertSee('Invoices');
+++    }
+++
+++    public function test_admin_can_create_invoice(): void
+++    {
+++        $user = $this->adminUser();
+++        $subscription = $this->activeSubscription();
+++
+++        $this->actingAs($user)
+++            ->post(route('invoices.store'), $this->invoicePayload($subscription))
+++            ->assertRedirect();
+++
+++        $this->assertDatabaseHas('invoices', [
+++            'customer_id' => $subscription->customer_id,
+++            'subscription_id' => $subscription->id,
+++            'status' => InvoiceStatus::Draft->value,
+++        ]);
+++    }
+++
+++    public function test_invoice_creation_requires_active_subscription(): void
+++    {
+++        $user = $this->adminUser();
+++        $customer = Customer::factory()->create(['status' => CustomerStatus::Active->value]);
+++        $package = Package::create([
+++            'name' => 'Basic Plan',
+++            'monthly_price' => 100,
+++            'downstream_kbps' => 1000,
+++            'upstream_kbps' => 500,
+++        ]);
+++        $subscription = Subscription::factory()->create([
+++            'customer_id' => $customer->id,
+++            'package_id' => $package->id,
+++            'status' => SubscriptionStatus::Pending->value,
+++            'subscription_type' => SubscriptionType::Primary->value,
+++        ]);
+++
+++        $this->actingAs($user)
+++            ->post(route('invoices.store'), $this->invoicePayload($subscription))
+++            ->assertSessionHasErrors('subscription_id');
+++    }
+++
+++    public function test_admin_can_view_invoice_show_page(): void
+++    {
+++        $user = $this->adminUser();
+++        $invoice = Invoice::factory()->published()->create();
+++
+++        $this->actingAs($user)
+++            ->get(route('invoices.show', $invoice))
+++            ->assertOk()
+++            ->assertSee($invoice->invoice_number);
+++    }
+++
+++    public function test_admin_can_update_draft_invoice(): void
+++    {
+++        $user = $this->adminUser();
+++        $invoice = Invoice::factory()->create();
+++
+++        $this->actingAs($user)
+++            ->put(route('invoices.update', $invoice), [
+++                'period_start' => now()->startOfMonth()->toDateString(),
+++                'period_end' => now()->endOfMonth()->toDateString(),
+++                'issue_date' => now()->toDateString(),
+++                'due_date' => now()->addDays(15)->toDateString(),
+++                'tax_amount' => 5,
+++                'discount_amount' => 0,
+++                'notes' => 'Updated notes',
+++            ])
+++            ->assertRedirect();
+++
+++        $this->assertDatabaseHas('invoices', [
+++            'id' => $invoice->id,
+++            'notes' => 'Updated notes',
+++        ]);
+++    }
+++
+++    public function test_admin_can_publish_draft_invoice(): void
+++    {
+++        $user = $this->adminUser();
+++        $invoice = Invoice::factory()->create([
+++            'total_amount' => 100,
+++            'balance_amount' => 100,
+++        ]);
+++        $invoice->items()->create([
+++            'description' => 'Monthly subscription',
+++            'item_type' => 'subscription',
+++            'quantity' => 1,
+++            'unit_price' => 100,
+++            'total_amount' => 100,
+++            'sort_order' => 0,
+++        ]);
+++
+++        $this->actingAs($user)
+++            ->post(route('invoices.publish', $invoice))
+++            ->assertRedirect();
+++
+++        $this->assertDatabaseHas('invoices', [
+++            'id' => $invoice->id,
+++            'status' => InvoiceStatus::Published->value,
+++        ]);
+++    }
+++
+++    public function test_admin_can_cancel_draft_invoice(): void
+++    {
+++        $user = $this->adminUser();
+++        $invoice = Invoice::factory()->create();
+++
+++        $this->actingAs($user)
+++            ->post(route('invoices.cancel', $invoice), [
+++                'cancellation_reason' => 'Duplicate invoice generated by mistake.',
+++            ])
+++            ->assertRedirect();
+++
+++        $this->assertDatabaseHas('invoices', [
+++            'id' => $invoice->id,
+++            'status' => InvoiceStatus::Cancelled->value,
+++        ]);
+++    }
+++
+++    public function test_invoice_cannot_be_published_without_items(): void
+++    {
+++        $user = $this->adminUser();
+++        $invoice = Invoice::factory()->create(['total_amount' => 100, 'balance_amount' => 100]);
+++
+++        $this->actingAs($user)
+++            ->post(route('invoices.publish', $invoice))
+++            ->assertSessionHasErrors('items');
+++    }
+++
+++    public function test_invoice_cannot_be_updated_after_publication(): void
+++    {
+++        $user = $this->adminUser();
+++        $invoice = Invoice::factory()->published()->create();
+++
+++        $this->actingAs($user)
+++            ->put(route('invoices.update', $invoice), [
+++                'period_start' => now()->startOfMonth()->toDateString(),
+++                'period_end' => now()->endOfMonth()->toDateString(),
+++                'issue_date' => now()->toDateString(),
+++                'due_date' => now()->addDays(15)->toDateString(),
+++                'tax_amount' => 5,
+++                'discount_amount' => 0,
+++                'notes' => 'Should fail',
+++            ])
+++            ->assertSessionHasErrors();
+++    }
+++}
+diff --git a/routes/web.php b/routes/web.php
+index d207a46..ff06ce2 100644
+--- a/routes/web.php
++++ b/routes/web.php
+@@ -28,7 +28,7 @@
+     // -------------------------------------------------------------------------
+     // Billing Management
+     // -------------------------------------------------------------------------
+-    Route::resource('invoices', InvoiceController::class)->except(['destroy']);
++    Route::resource('invoices', InvoiceController::class);
+     Route::post('invoices/{invoice}/publish', [InvoiceController::class, 'publish'])->name('invoices.publish');
+     Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+ 
+diff --git a/tests/Feature/InvoiceControllerTest.php b/tests/Feature/InvoiceControllerTest.php
+index 1b5b8cc..88a4af6 100644
+--- a/tests/Feature/InvoiceControllerTest.php
++++ b/tests/Feature/InvoiceControllerTest.php
+@@ -72,6 +72,14 @@ private function invoicePayload(Subscription $subscription, array $overrides = [
+         ], $overrides);
+     }
+ 
++    private function createInvoiceFor(Subscription $subscription, array $overrides = []): Invoice
++    {
++        return Invoice::factory()->create(array_merge([
++            'customer_id' => $subscription->customer_id,
++            'subscription_id' => $subscription->id,
++        ], $overrides));
++    }
++
+     public function test_index_requires_authentication(): void
+     {
+         $this->get(route('invoices.index'))->assertRedirect(route('login'));
+@@ -127,7 +135,11 @@ public function test_invoice_creation_requires_active_subscription(): void
+     public function test_admin_can_view_invoice_show_page(): void
+     {
+         $user = $this->adminUser();
+-        $invoice = Invoice::factory()->published()->create();
++        $subscription = $this->activeSubscription();
++        $invoice = $this->createInvoiceFor($subscription, [
++            'status' => InvoiceStatus::Published->value,
++            'published_at' => now(),
++        ]);
+ 
+         $this->actingAs($user)
+             ->get(route('invoices.show', $invoice))
+@@ -138,7 +150,8 @@ public function test_admin_can_view_invoice_show_page(): void
+     public function test_admin_can_update_draft_invoice(): void
+     {
+         $user = $this->adminUser();
+-        $invoice = Invoice::factory()->create();
++        $subscription = $this->activeSubscription();
++        $invoice = $this->createInvoiceFor($subscription);
+ 
+         $this->actingAs($user)
+             ->put(route('invoices.update', $invoice), [
+@@ -161,7 +174,8 @@ public function test_admin_can_update_draft_invoice(): void
+     public function test_admin_can_publish_draft_invoice(): void
+     {
+         $user = $this->adminUser();
+-        $invoice = Invoice::factory()->create([
++        $subscription = $this->activeSubscription();
++        $invoice = $this->createInvoiceFor($subscription, [
+             'total_amount' => 100,
+             'balance_amount' => 100,
+         ]);
+@@ -187,7 +201,8 @@ public function test_admin_can_publish_draft_invoice(): void
+     public function test_admin_can_cancel_draft_invoice(): void
+     {
+         $user = $this->adminUser();
+-        $invoice = Invoice::factory()->create();
++        $subscription = $this->activeSubscription();
++        $invoice = $this->createInvoiceFor($subscription);
+ 
+         $this->actingAs($user)
+             ->post(route('invoices.cancel', $invoice), [
+@@ -204,7 +219,8 @@ public function test_admin_can_cancel_draft_invoice(): void
+     public function test_invoice_cannot_be_published_without_items(): void
+     {
+         $user = $this->adminUser();
+-        $invoice = Invoice::factory()->create(['total_amount' => 100, 'balance_amount' => 100]);
++        $subscription = $this->activeSubscription();
++        $invoice = $this->createInvoiceFor($subscription, ['total_amount' => 100, 'balance_amount' => 100]);
+ 
+         $this->actingAs($user)
+             ->post(route('invoices.publish', $invoice))
+@@ -214,7 +230,11 @@ public function test_invoice_cannot_be_published_without_items(): void
+     public function test_invoice_cannot_be_updated_after_publication(): void
+     {
+         $user = $this->adminUser();
+-        $invoice = Invoice::factory()->published()->create();
++        $subscription = $this->activeSubscription();
++        $invoice = $this->createInvoiceFor($subscription, [
++            'status' => InvoiceStatus::Published->value,
++            'published_at' => now(),
++        ]);
+ 
+         $this->actingAs($user)
+             ->put(route('invoices.update', $invoice), [

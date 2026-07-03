@@ -1027,3 +1027,46 @@
 
 **Notes:** Package and Onu models remain stubs; full implementation is separate stories. The packages table migration (2026_06_25_000002) uses is_active boolean rather than a status enum — this will be reconciled when the Package module architecture is reviewed. Test suite requires running migrations before execution.
 
+---
+
+### 2026-07-03 | Backend | Sprint 2.3 — Invoice Module Implementation
+
+**Summary:** Implemented the complete Invoice module following the approved architecture and reusing the Customer/Subscription module patterns. Built Billing service-first flow end-to-end: created InvoicePolicy, four Form Requests (store/update/publish/cancel), InvoiceResource, InvoiceController (orchestration only), InvoiceService (all business rules and lifecycle transitions), Invoice and InvoiceItem models, PaymentAllocation stub model, two domain events (InvoiceOverdue, InvoiceCancelled), full Blade UI (index/show/create/edit), factory support, feature tests, route registration, policy registration, and AdminLTE navigation integration. Kept invoice lifecycle enforcement in InvoiceService: create draft invoice with one-invoice-per-period protection, publish draft invoice with preconditions (must have items and positive total), cancel draft-only with mandatory reason, overdue transition only from published/partially-paid, and payment allocation bookkeeping via `recordPaymentAllocation()`. Ensured immutable invoice behavior after publication by restricting updates to draft status only. Replaced misordered Invoice migrations with architecture-aligned replacements at the correct timestamp order so payment allocation FK dependencies resolve during fresh migrations.
+
+**Files Added:**
+- app/Domain/Events/InvoiceOverdue.php
+- app/Domain/Events/InvoiceCancelled.php
+- app/Policies/InvoicePolicy.php
+- app/Http/Requests/Invoice/StoreInvoiceRequest.php
+- app/Http/Requests/Invoice/UpdateInvoiceRequest.php
+- app/Http/Requests/Invoice/PublishInvoiceRequest.php
+- app/Http/Requests/Invoice/CancelInvoiceRequest.php
+- app/Http/Resources/InvoiceResource.php
+- app/Services/Billing/InvoiceService.php
+- app/Http/Controllers/InvoiceController.php
+- app/Models/InvoiceItem.php
+- app/Models/PaymentAllocation.php
+- database/factories/InvoiceFactory.php
+- resources/views/invoices/index.blade.php
+- resources/views/invoices/show.blade.php
+- resources/views/invoices/create.blade.php
+- resources/views/invoices/edit.blade.php
+- tests/Feature/InvoiceControllerTest.php
+- database/migrations/2026_07_02_000005_create_invoices_table.php
+- database/migrations/2026_07_02_000006_create_invoice_items_table.php
+
+**Files Modified:**
+- app/Models/Invoice.php (stub → full implementation)
+- app/Providers/AuthServiceProvider.php (InvoicePolicy registered)
+- routes/web.php (invoice resource + lifecycle routes)
+- config/adminlte.php (Invoices navigation item added)
+- docs/changelog/development-log.md
+
+**Files Deleted:**
+- database/migrations/2026_07_03_000002_create_invoices_table.php (replaced to fix migration ordering)
+- database/migrations/2026_07_03_000003_create_invoice_items_table.php (replaced to fix migration ordering)
+
+**Architecture Impact:** Invoice module now follows Service-First Application Layer rules consistently: Controller handles authorize/validate/invoke/respond only; all lifecycle and business constraints are centralized in `InvoiceService`. Domain events implement `ShouldDispatchAfterCommit` semantics through the module event pattern. Migration order is now architecture-safe for fresh installs: invoices and invoice_items run before payment_allocations, resolving FK dependency correctness. Invoice immutability model is enforced in code (draft editable; published immutable except payment-driven financial fields).
+
+**Notes:** Initial focused test run failed before executing assertions due pre-existing migration order dependency (`payment_allocations.invoice_id` FK before invoices existed). This was resolved by replacing the invoice migration timestamps to run before payment allocations. A re-run of `InvoiceControllerTest` was requested but skipped in-session by user action, so final green test confirmation is pending.
+

@@ -3,7 +3,10 @@
 namespace Database\Factories;
 
 use App\Enums\InvoiceStatus;
+use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\Package;
+use App\Models\Subscription;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,8 +24,24 @@ class InvoiceFactory extends Factory
 
         return [
             'invoice_number'     => 'INV-' . now()->format('Ym') . '-' . str_pad((string) $this->faker->numberBetween(1, 999999), 6, '0', STR_PAD_LEFT),
-            'customer_id'        => null,
-            'subscription_id'    => null,
+            'customer_id'        => Customer::factory(),
+            'subscription_id'    => function (array $attributes): int {
+                $package = Package::query()->first();
+
+                if (!$package) {
+                    $package = Package::create([
+                        'name' => 'Factory Package ' . strtoupper($this->faker->bothify('??##')),
+                        'monthly_price' => 100,
+                        'downstream_kbps' => 1000,
+                        'upstream_kbps' => 500,
+                    ]);
+                }
+
+                return Subscription::factory()->active()->create([
+                    'customer_id' => $attributes['customer_id'],
+                    'package_id' => $package->id,
+                ])->id;
+            },
             'status'             => InvoiceStatus::Draft->value,
             'period_start'       => $issueDate->format('Y-m-d'),
             'period_end'         => (clone $issueDate)->modify('+30 days')->format('Y-m-d'),

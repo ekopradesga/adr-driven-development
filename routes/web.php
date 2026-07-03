@@ -28,7 +28,7 @@ Route::middleware('auth')->group(function () {
     // -------------------------------------------------------------------------
     // Billing Management
     // -------------------------------------------------------------------------
-    Route::resource('invoices', InvoiceController::class)->except(['destroy']);
+    Route::resource('invoices', InvoiceController::class);
     Route::post('invoices/{invoice}/publish', [InvoiceController::class, 'publish'])->name('invoices.publish');
     Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
 

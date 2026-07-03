@@ -72,6 +72,14 @@ class InvoiceControllerTest extends TestCase
         ], $overrides);
     }
 
+    private function createInvoiceFor(Subscription $subscription, array $overrides = []): Invoice
+    {
+        return Invoice::factory()->create(array_merge([
+            'customer_id' => $subscription->customer_id,
+            'subscription_id' => $subscription->id,
+        ], $overrides));
+    }
+
     public function test_index_requires_authentication(): void
     {
         $this->get(route('invoices.index'))->assertRedirect(route('login'));
@@ -127,7 +135,11 @@ class InvoiceControllerTest extends TestCase
     public function test_admin_can_view_invoice_show_page(): void
     {
         $user = $this->adminUser();
-        $invoice = Invoice::factory()->published()->create();
+        $subscription = $this->activeSubscription();
+        $invoice = $this->createInvoiceFor($subscription, [
+            'status' => InvoiceStatus::Published->value,
+            'published_at' => now(),
+        ]);
 
         $this->actingAs($user)
             ->get(route('invoices.show', $invoice))
@@ -138,7 +150,8 @@ class InvoiceControllerTest extends TestCase
     public function test_admin_can_update_draft_invoice(): void
     {
         $user = $this->adminUser();
-        $invoice = Invoice::factory()->create();
+        $subscription = $this->activeSubscription();
+        $invoice = $this->createInvoiceFor($subscription);
 
         $this->actingAs($user)
             ->put(route('invoices.update', $invoice), [
@@ -161,7 +174,8 @@ class InvoiceControllerTest extends TestCase
     public function test_admin_can_publish_draft_invoice(): void
     {
         $user = $this->adminUser();
-        $invoice = Invoice::factory()->create([
+        $subscription = $this->activeSubscription();
+        $invoice = $this->createInvoiceFor($subscription, [
             'total_amount' => 100,
             'balance_amount' => 100,
         ]);
@@ -187,7 +201,8 @@ class InvoiceControllerTest extends TestCase
     public function test_admin_can_cancel_draft_invoice(): void
     {
         $user = $this->adminUser();
-        $invoice = Invoice::factory()->create();
+        $subscription = $this->activeSubscription();
+        $invoice = $this->createInvoiceFor($subscription);
 
         $this->actingAs($user)
             ->post(route('invoices.cancel', $invoice), [
@@ -204,7 +219,8 @@ class InvoiceControllerTest extends TestCase
     public function test_invoice_cannot_be_published_without_items(): void
     {
         $user = $this->adminUser();
-        $invoice = Invoice::factory()->create(['total_amount' => 100, 'balance_amount' => 100]);
+        $subscription = $this->activeSubscription();
+        $invoice = $this->createInvoiceFor($subscription, ['total_amount' => 100, 'balance_amount' => 100]);
 
         $this->actingAs($user)
             ->post(route('invoices.publish', $invoice))
@@ -214,7 +230,11 @@ class InvoiceControllerTest extends TestCase
     public function test_invoice_cannot_be_updated_after_publication(): void
     {
         $user = $this->adminUser();
-        $invoice = Invoice::factory()->published()->create();
+        $subscription = $this->activeSubscription();
+        $invoice = $this->createInvoiceFor($subscription, [
+            'status' => InvoiceStatus::Published->value,
+            'published_at' => now(),
+        ]);
 
         $this->actingAs($user)
             ->put(route('invoices.update', $invoice), [

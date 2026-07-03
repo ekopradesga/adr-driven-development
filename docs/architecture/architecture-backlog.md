@@ -55,6 +55,8 @@ The Architecture Backlog is **not** a dumping ground. Every item has a clear own
 - [Epic B — Customer Implementation Preparation](#epic-b--customer-implementation-preparation)
 - [Epic C — Future Customer Improvements](#epic-c--future-customer-improvements)
 - [Epic D — Technical Investigations](#epic-d--technical-investigations)
+- [Epic E — Subscription Architecture Finalization](#epic-e--subscription-architecture-finalization)
+- [Epic F — Payment Architecture Finalization](#epic-f--payment-architecture-finalization)
 - [Closed Items](#closed-items)
 
 ---
@@ -801,6 +803,109 @@ The subscriptions migration (`2026_07_02_000004_create_subscriptions_table.php`)
 
 ---
 
+# Epic F — Payment Architecture Finalization
+
+**Scope:** Items that must be completed before Payment module implementation begins.
+**Target Version:** v1.0
+**Priority:** Critical / High
+**Source:** Sprint 2.4 Payment Module Pre-Work (2026-07-03)
+
+---
+
+### ARCH-026
+
+**Title:** Payment Lifecycle Canonical States and PaymentStatus Enum
+
+**Priority:** Critical
+**Status:** Closed
+**Target Version:** v1.0
+**Blocking:** Yes
+
+**Resolution (2026-07-03):** Added Architecture Decision "Payment Lifecycle Canonical States" to `decisions.md`. Canonical states defined: `intent_created`, `waiting_payment`, `received`, `validated`, `recorded`, `partially_allocated`, `fully_allocated`, `completed`, `reversed`, `failed`. `entities.md` Payment lifecycle updated to match.
+
+---
+
+### ARCH-027
+
+**Title:** Payment Entity Column Specification
+
+**Priority:** Critical
+**Status:** Closed
+**Target Version:** v1.0
+**Blocking:** Yes
+
+**Resolution (2026-07-03):** `entities.md` Payment entity fully respecified with column table including payment_number, status enum, payment_date, amount, currency, method, channel_reference, recorded/completed/reversed timestamps, reversal/failure reasons, and no soft delete policy.
+
+---
+
+### ARCH-028
+
+**Title:** PaymentAllocation Entity Column Specification and Immutability Model
+
+**Priority:** High
+**Status:** Closed
+**Target Version:** v1.0
+**Blocking:** No
+
+**Resolution (2026-07-03):** `entities.md` PaymentAllocation entity updated with full column specification and canonical status model (`allocated`, `reversed`) using append-only correction semantics. Added Architecture Decision "Payment Record and Allocation Immutability" to `decisions.md`.
+
+---
+
+### ARCH-029
+
+**Title:** Payment Business Events — Missing Failure and Reversal Events
+
+**Priority:** High
+**Status:** Closed
+**Target Version:** v1.0
+**Blocking:** No
+
+**Resolution (2026-07-03):** Added `PaymentReversed` and `PaymentFailed` event contracts to `business-events.md`. Updated the event matrix to include both events and their consumers.
+
+---
+
+### ARCH-030
+
+**Title:** Existing `payments` Migration Audit and Replacement
+
+**Priority:** High
+**Status:** Todo
+**Target Version:** v1.0
+**Blocking:** Yes (before Payment module implementation)
+
+**Description:**
+
+`database/migrations/2026_07_02_000007_create_payments_table.php` is a Sprint 0 stub migration with architecture mismatches (softDeletes, audit columns, non-canonical status defaults, and missing canonical lifecycle fields).
+
+**Recommended Action:**
+
+1. Replace stub with architecture-aligned payments migration using canonical Payment columns and no soft delete
+2. Align status enum values to ARCH-026
+3. Keep migration ordering compatible with customers/invoices/payment_allocations dependencies
+
+---
+
+### ARCH-031
+
+**Title:** Existing `payment_allocations` Migration Audit and Replacement
+
+**Priority:** High
+**Status:** Todo
+**Target Version:** v1.0
+**Blocking:** Yes (before Payment module implementation)
+
+**Description:**
+
+`database/migrations/2026_07_02_000008_create_payment_allocations_table.php` is a Sprint 0 stub migration with architecture mismatches (softDeletes, audit columns, no allocation status lifecycle fields).
+
+**Recommended Action:**
+
+1. Replace stub with architecture-aligned payment_allocations migration using append-only correction model
+2. Add canonical allocation status and reversal metadata columns
+3. Preserve FK integrity and unique allocation constraints
+
+---
+
 # Closed Items
 
 *No items closed yet. Items are moved here when fully resolved with documentation updated.*
@@ -815,8 +920,8 @@ The subscriptions migration (`2026_07_02_000004_create_subscriptions_table.php`)
 
 | Priority | Count | Open Items | Closed Items |
 |---|---|---|---|
-| **Critical** | 5 | 0 | ARCH-001, ARCH-002, ARCH-003, ARCH-019, ARCH-020 |
-| **High** | 10 | ARCH-008, ARCH-009 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025 |
+| **Critical** | 7 | 0 | ARCH-001, ARCH-002, ARCH-003, ARCH-019, ARCH-020, ARCH-026, ARCH-027 |
+| **High** | 14 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025, ARCH-028, ARCH-029 |
 | **Medium** | 4 | ARCH-010, ARCH-011, ARCH-013 | ARCH-024 |
 | **Low** | 3 | ARCH-012, ARCH-014, ARCH-015 | — |
 | **Investigation** | 3 | ARCH-016, ARCH-018 | ARCH-017 |
@@ -825,8 +930,8 @@ The subscriptions migration (`2026_07_02_000004_create_subscriptions_table.php`)
 
 | Status | Count | Items |
 |---|---|---|
-| **Closed** | 16 | ARCH-001–007, ARCH-017, ARCH-019–025 |
-| **Todo** | 2 | ARCH-008, ARCH-009 |
+| **Closed** | 20 | ARCH-001–007, ARCH-017, ARCH-019–029 |
+| **Todo** | 4 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 |
 | **Open** | 2 | ARCH-016, ARCH-018 |
 | **Deferred** | 6 | ARCH-010, ARCH-011, ARCH-012, ARCH-013, ARCH-014, ARCH-015 |
 | **In Progress** | 0 | — |
@@ -837,90 +942,7 @@ The subscriptions migration (`2026_07_02_000004_create_subscriptions_table.php`)
 |---|---|---|
 | Customer | ✅ Implemented | None |
 | Subscription | ✅ Architecture approved | None (ARCH-019–025 all closed) |
-
----
-
-**End of Document**
-
-### By Priority
-
-| Priority | Count | Open Items | Closed Items |
-|---|---|---|---|
-| **Critical** | 5 | ARCH-019, ARCH-020 | ARCH-001, ARCH-002, ARCH-003 |
-| **High** | 10 | ARCH-008, ARCH-009, ARCH-021, ARCH-022, ARCH-023, ARCH-025 | ARCH-004, ARCH-005, ARCH-006, ARCH-007 |
-| **Medium** | 4 | ARCH-010, ARCH-011, ARCH-013, ARCH-024 | — |
-| **Low** | 3 | ARCH-012, ARCH-014, ARCH-015 | — |
-| **Investigation** | 3 | ARCH-016, ARCH-018 | ARCH-017 |
-
-### By Status
-
-| Status | Count | Items |
-|---|---|---|
-| **Closed** | 8 | ARCH-001, ARCH-002, ARCH-003, ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-017 |
-| **Todo** | 9 | ARCH-008, ARCH-009, ARCH-019, ARCH-020, ARCH-021, ARCH-022, ARCH-023, ARCH-024, ARCH-025 |
-| **Open** | 2 | ARCH-016, ARCH-018 |
-| **Deferred** | 6 | ARCH-010, ARCH-011, ARCH-012, ARCH-013, ARCH-014, ARCH-015 |
-| **In Progress** | 0 | — |
-
-### Sprint Readiness
-
-| Module | Status | Blocking Items |
-|---|---|---|
-| Customer | ✅ Implemented | None |
-| Subscription | ❌ Not ready | ARCH-019, ARCH-020 (Critical) + ARCH-021, ARCH-022, ARCH-023 (High) |
-
-### Subscription Module Blockers
-
-| ID | Title | Priority |
-|---|---|---|
-| ARCH-019 | Subscription Lifecycle Canonical States and SubscriptionStatus Enum | Critical |
-| ARCH-020 | Subscription Entity Column Specification | Critical |
-| ARCH-021 | Subscription Type Column — Primary vs Addon | High |
-| ARCH-022 | Subscription Suspension Sub-Types Formal Specification | High |
-| ARCH-023 | Subscription Pre-Activation Business Events Not Cataloged | High |
-
----
-
-**End of Document**
-
-### By Priority
-
-| Priority | Count | Open Items | Closed Items |
-|---|---|---|---|
-| **Critical** | 3 | 0 | ARCH-001, ARCH-002, ARCH-003 |
-| **High** | 6 | ARCH-008, ARCH-009 | ARCH-004, ARCH-005, ARCH-006, ARCH-007 |
-| **Medium** | 3 | ARCH-010, ARCH-011, ARCH-013 | — |
-| **Low** | 3 | ARCH-012, ARCH-014, ARCH-015 | — |
-| **Investigation** | 3 | ARCH-016, ARCH-018 | ARCH-017 |
-
-### By Status
-
-| Status | Count | Items |
-|---|---|---|
-| **Closed** | 8 | ARCH-001, ARCH-002, ARCH-003, ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-017 |
-| **Todo** | 2 | ARCH-008, ARCH-009 |
-| **Open** | 2 | ARCH-016, ARCH-018 |
-| **Deferred** | 6 | ARCH-010, ARCH-011, ARCH-012, ARCH-013, ARCH-014, ARCH-015 |
-| **In Progress** | 0 | — |
-
-### Sprint 2.1 Implementation Blockers
-
-All three original Critical blockers are now **Closed**. Customer module implementation may proceed.
-
-| ID | Title | Status |
-|---|---|---|
-| ARCH-001 | Canonical Customer Lifecycle and Terminology | ✅ Closed |
-| ARCH-002 | Create Customer Workflow Document | ✅ Closed |
-| ARCH-003 | Customer Entity Column Specification | ✅ Closed |
-
-### Remaining Open Items (Non-Blocking)
-
-| ID | Title | Priority | Notes |
-|---|---|---|---|
-| ARCH-008 | One Active Subscription Enforcement Mechanism | High | Decided: application-layer lockForUpdate(). Todo: document in ActivateSubscriptionService |
-| ARCH-009 | Existing customers migration audit | High | Sprint 0 migration must be replaced before shared environment use |
-| ARCH-016 | Partial unique index investigation | High | MySQL/MariaDB doesn't support it; confirms application-only approach |
-| ARCH-018 | Customer → Active trigger mechanism | Medium | Documented: triggered by SubscriptionActivated event |
+| Payment | ❌ Pre-work completed, implementation blocked | ARCH-030, ARCH-031 |
 
 ---
 

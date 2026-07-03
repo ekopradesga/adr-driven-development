@@ -1307,9 +1307,34 @@ Represents monetary receipt from customer.
 Payments
 
 ### Lifecycle
-Recorded -> Confirmed -> Allocated -> Reversed (if needed).
+Intent Created -> Waiting Payment -> Received -> Validated -> Recorded -> Partially Allocated/Fully Allocated -> Completed -> Reversed/Failed.
 
 Deletion behavior: Restrict and logical immutability; correction through reversal.
+
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `payment_number` | VARCHAR(30) | No | Unique. Format: PAY-YYYYMM-000001. Immutable. |
+| `customer_id` | BIGINT UNSIGNED | No | FK -> customers.id (RESTRICT) |
+| `status` | ENUM | No | `intent_created`, `waiting_payment`, `received`, `validated`, `recorded`, `partially_allocated`, `fully_allocated`, `completed`, `reversed`, `failed` |
+| `payment_date` | DATE | No | Payment transaction date |
+| `amount` | DECIMAL(12,2) | No | Gross payment amount |
+| `currency` | CHAR(3) | No | Default `IDR` |
+| `method` | VARCHAR(30) | No | `cash`, `bank_transfer`, `va`, `qris`, `card`, `other` |
+| `channel_reference` | VARCHAR(100) | Yes | External channel reference (VA number, gateway ref, etc.) |
+| `received_by` | BIGINT UNSIGNED | Yes | FK -> users.id (NULL ON DELETE) |
+| `recorded_at` | TIMESTAMP | Yes | Timestamp when immutable payment record is created |
+| `completed_at` | TIMESTAMP | Yes | Timestamp when lifecycle reaches completed |
+| `reversed_at` | TIMESTAMP | Yes | Timestamp when reversal is executed |
+| `reversal_reason` | TEXT | Yes | Mandatory when reversed |
+| `failure_reason` | TEXT | Yes | Failure reason for failed state |
+| `notes` | TEXT | Yes | Internal notes |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+
+**No `deleted_at` column.** Payments are never deleted.
 
 ### Relationships
 - Customer 1 -> N Payment
@@ -1318,10 +1343,15 @@ Deletion behavior: Restrict and logical immutability; correction through reversa
 - Payment 1 -> N TimelineEvent
 
 ### Key Attributes
-Payment reference, channel, amount, confirmation state, receipt context.
+Payment number, status, channel, amount, immutable recording context, and correction metadata.
 
 ### Business Rules
-Payment can settle one or multiple invoices through allocations.
+1. Payment records are immutable after `recorded` state.
+2. Corrections use reversal workflow; payment rows are never deleted.
+3. One payment may allocate to one or many invoices.
+4. Payment amount is always positive.
+5. `completed` is reached only after allocation outcome finalization.
+6. `reversed` requires reason, actor context, and timestamp.
 
 ### Notes
 Payment confirmation may trigger reactivation flow.
@@ -1356,6 +1386,8 @@ Never
 - PaymentValidated
 - PaymentCompleted
 - PaymentReallocated
+- PaymentReversed
+- PaymentFailed
 
 ### Consumes Events
 - InvoicePublished
@@ -1369,9 +1401,27 @@ Maps part of payment amount to specific invoice balance.
 Payments
 
 ### Lifecycle
-Created -> Adjusted -> Reversed.
+Allocated -> Reallocated -> Reversed.
 
 Deletion behavior: Restrict; logical immutability for confirmed allocations.
+
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `payment_id` | BIGINT UNSIGNED | No | FK -> payments.id (CASCADE) |
+| `invoice_id` | BIGINT UNSIGNED | No | FK -> invoices.id (RESTRICT) |
+| `allocated_amount` | DECIMAL(12,2) | No | Allocation amount for target invoice |
+| `status` | ENUM | No | `allocated`, `reversed` |
+| `allocated_at` | TIMESTAMP | No | Allocation timestamp |
+| `reversed_at` | TIMESTAMP | Yes | Reversal timestamp |
+| `reversal_reason` | TEXT | Yes | Mandatory when reversed |
+| `notes` | TEXT | Yes | Internal notes |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+
+**No `deleted_at` column.** Allocation history is preserved through status transitions, not delete.
 
 ### Relationships
 - Payment 1 -> N PaymentAllocation
@@ -1384,6 +1434,10 @@ Allocated amount, allocation status, allocation reason.
 Allocation must not exceed payment remaining amount.
 
 Invoice balance must not become negative.
+
+Reallocation must be auditable and preserve prior allocation history.
+
+Only authorized actors may reverse allocations.
 
 ### Notes
 PaymentAllocation belongs to Payment and references Invoice.
@@ -1401,7 +1455,7 @@ Transaction
 docs/workflows/payment-workflow.md
 
 ### Immutability
-Mutable
+Append Only
 
 ### Soft Delete
 Never

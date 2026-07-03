@@ -210,6 +210,8 @@ When conflicts occur, follow the Documentation Hierarchy defined in the Architec
   - [Invoice Immutability Enforcement](#decision-invoice-immutability-enforcement)
   - [Billing Period Data Model for v1.0](#decision-billing-period-data-model-for-v10)
 - [Payments](#payments)
+  - [Payment Lifecycle Canonical States](#decision-payment-lifecycle-canonical-states)
+  - [Payment Record and Allocation Immutability](#decision-payment-record-and-allocation-immutability)
   - [Payment Allocation Model](#decision-payment-allocation-model)
   - [Overpayment and Credit Handling](#decision-overpayment-and-credit-handling)
 - [Monitoring & Network](#monitoring--network)
@@ -1038,6 +1040,58 @@ A `BillingPeriod` entity requires the automated billing cycle engine (periodic b
 - `erd.md` Billing section note added: BillingPeriod→Invoice relationship is v1.1.
 
 # Payments
+
+### Decision: Payment Lifecycle Canonical States
+
+#### Decision
+The Payment aggregate uses the following canonical lifecycle states in v1.0:
+
+- `intent_created`
+- `waiting_payment`
+- `received`
+- `validated`
+- `recorded`
+- `partially_allocated`
+- `fully_allocated`
+- `completed`
+- `reversed`
+- `failed`
+
+`completed`, `reversed`, and `failed` are terminal states for normal processing.
+`reversed` may only be entered through authorized reversal workflow.
+
+#### Reason
+`payment-workflow.md` documents a rich lifecycle, but without canonical persisted values implementation teams may create inconsistent `payments.status` values across services, jobs, and reporting.
+
+#### Impact
+- `payments.status` must be implemented as constrained enum values above.
+- `PaymentStatus` enum in application code must match these values exactly.
+- Workflow transitions in PaymentService must follow the documented state graph.
+- Reporting and notifications can rely on consistent terminal states.
+
+### Decision: Payment Record and Allocation Immutability
+
+#### Decision
+Payment records are logically immutable after `recorded`:
+
+- Payment rows are never edited for financial identity fields (`payment_number`, `amount`, `method`, channel references)
+- Payment rows are never deleted (no soft delete)
+- Corrections are performed through `reversed` workflow with explicit reason and actor capture
+
+Payment allocation is mutable by policy through append-only correction semantics:
+
+- Existing confirmed allocation rows are not hard-edited for history-changing corrections
+- Reallocation/reversal is represented by new allocation/reversal entries with full audit trail
+- Invoice balance updates are derived from active allocation outcomes
+
+#### Reason
+Payment history is financial evidence. Edits and deletes reduce audit integrity. At the same time, allocation changes are operationally necessary and must remain traceable.
+
+#### Impact
+- `payments` table has no `deleted_at`.
+- `payment_allocations` supports reallocation/reversal history with actor and reason capture.
+- Payment and Billing services must enforce append-only correction behavior.
+- Timeline and Activity Log entries are required for every reversal/reallocation action.
 
 ### Decision: Payment Allocation Model
 

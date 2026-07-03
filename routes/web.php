@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ProfileController;
@@ -31,6 +32,15 @@ Route::middleware('auth')->group(function () {
     Route::resource('invoices', InvoiceController::class);
     Route::post('invoices/{invoice}/publish', [InvoiceController::class, 'publish'])->name('invoices.publish');
     Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+
+    Route::resource('payments', PaymentController::class);
+    Route::post('payments/{payment}/receive', [PaymentController::class, 'receive'])->name('payments.receive');
+    Route::post('payments/{payment}/validate', [PaymentController::class, 'validatePayment'])->name('payments.validate');
+    Route::post('payments/{payment}/record', [PaymentController::class, 'record'])->name('payments.record');
+    Route::post('payments/{payment}/allocate', [PaymentController::class, 'allocate'])->name('payments.allocate');
+    Route::post('payments/{payment}/complete', [PaymentController::class, 'complete'])->name('payments.complete');
+    Route::post('payments/{payment}/reverse', [PaymentController::class, 'reverse'])->name('payments.reverse');
+    Route::post('payments/{payment}/fail', [PaymentController::class, 'fail'])->name('payments.fail');
 
     // -------------------------------------------------------------------------
     // Subscription Management

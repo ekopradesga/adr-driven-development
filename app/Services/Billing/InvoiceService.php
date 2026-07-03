@@ -242,6 +242,30 @@ class InvoiceService extends AbstractCrudService
         });
     }
 
+    public function reversePaymentAllocation(Invoice $invoice, float $amount): Invoice
+    {
+        return DB::transaction(function () use ($invoice, $amount) {
+            $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
+
+            $paidAmount = max(0, (float) $invoice->paid_amount - $amount);
+            $balanceAmount = max(0, (float) $invoice->total_amount - $paidAmount);
+
+            $status = match (true) {
+                $balanceAmount <= 0 => InvoiceStatus::Paid->value,
+                $paidAmount > 0 => InvoiceStatus::PartiallyPaid->value,
+                default => InvoiceStatus::Published->value,
+            };
+
+            $invoice->update([
+                'paid_amount' => $paidAmount,
+                'balance_amount' => $balanceAmount,
+                'status' => $status,
+            ]);
+
+            return $invoice->fresh(['customer', 'subscription', 'items']);
+        });
+    }
+
     // ---------------------------------------------------------------------
     // View Builders
     // ---------------------------------------------------------------------

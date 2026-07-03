@@ -1610,6 +1610,119 @@ Finance-driven automatic reallocation rules.
 
 ---
 
+## PaymentReversed
+
+### Event Name
+`PaymentReversed`
+
+### Description
+An already recorded payment has been reversed through authorized correction workflow.
+
+### Category
+Integration Event
+
+### Producer
+Payment Workflow
+
+### Consumers
+- Billing Workflow (recompute balances)
+- Subscription Lifecycle (reactivation eligibility re-evaluation)
+- Collector Workflow
+- Notification Workflow
+- Timeline
+- Activity Log
+- Customer Portal
+
+### Trigger
+Authorized reversal action is approved and executed on a recorded/completed payment.
+
+### Business Meaning
+Previously recognized settlement is rolled back through controlled financial correction while preserving full history.
+
+### Related Workflow
+Payment Workflow — Payment Reversed state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Customer and internal reversal notifications based on policy.
+
+### Customer Portal Impact
+Yes. Payment history reflects reversal and adjusted balances.
+
+### Audit Requirement
+Reversal reason, actor, authorization reference, and timestamp must be preserved.
+
+### Idempotency
+Yes. Duplicate reversal processing must not create duplicate balance rollback.
+
+### Retry Consideration
+Downstream recalculation must be idempotent.
+
+### Future Extensions
+Dual-approval reversal flow for high-value payments.
+
+---
+
+## PaymentFailed
+
+### Event Name
+`PaymentFailed`
+
+### Description
+A payment attempt failed during validation, recording, allocation, or policy checks.
+
+### Category
+Domain Event
+
+### Producer
+Payment Workflow
+
+### Consumers
+- Notification Workflow
+- Timeline
+- Activity Log
+- Customer Portal
+
+### Trigger
+Payment Workflow transitions to `failed` with a classified failure reason.
+
+### Business Meaning
+Settlement did not complete and no successful financial closure occurred.
+
+### Related Workflow
+Payment Workflow — Payment Failed state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Failure notifications according to policy.
+
+### Customer Portal Impact
+Yes. Failed status and next action guidance are visible.
+
+### Audit Requirement
+Failure class, reason, actor/system source, and timestamp must be preserved.
+
+### Idempotency
+Yes. Repeated failure signals for the same attempt must not duplicate records.
+
+### Retry Consideration
+Retry path is policy-driven and must preserve failed-attempt history.
+
+### Future Extensions
+Automated failure classification and remediation suggestions.
+
+---
+
 ## CollectorAssigned
 
 ### Event Name
@@ -2723,6 +2836,8 @@ Impersonation session summary report for compliance review.
 | PaymentValidated | Payment Workflow | Timeline, Activity Log | Normal | System |
 | PaymentCompleted | Payment Workflow | Billing, Subscription Lifecycle, Collector, Notification, Timeline, Activity Log, Customer Portal | High | Integration |
 | PaymentReallocated | Payment Workflow | Billing, Notification, Timeline, Activity Log | Normal | Domain |
+| PaymentReversed | Payment Workflow | Billing, Subscription Lifecycle, Collector, Notification, Timeline, Activity Log, Customer Portal | High | Integration |
+| PaymentFailed | Payment Workflow | Notification, Timeline, Activity Log, Customer Portal | Normal | Domain |
 | CollectorAssigned | Collector Workflow | Notification, Timeline, Activity Log | Normal | Domain |
 | CollectorVisitStarted | Collector Workflow | Notification, Timeline, Activity Log | Normal | Domain |
 | CollectorVisitCompleted | Collector Workflow | Payment, Notification, Timeline, Activity Log, Customer Portal | Normal | Integration |

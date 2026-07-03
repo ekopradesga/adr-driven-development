@@ -983,6 +983,59 @@
 
 ---
 
+### 2026-07-03 | Backend | Sprint 2.4 — Payment Module Implementation
+
+**Summary:** Implemented the Payment module end-to-end following the finalized payment architecture. Replaced the Sprint 0 payment stubs with architecture-aligned migrations and full domain code: Payment and PaymentAllocation models, PaymentStatus and PaymentAllocationStatus enums, PaymentService with lifecycle transitions and allocation/reversal logic, PaymentPolicy, payment form requests, PaymentResource, PaymentController, payment Blade views, Payment feature tests, route registration, policy registration, and AdminLTE navigation integration. Added payment domain events for intent, receipt, validation, recording, allocation, completion, reversal, failure, and partial/full allocation outcomes.
+
+**Files Added:**
+- app/Enums/PaymentStatus.php
+- app/Enums/PaymentAllocationStatus.php
+- app/Domain/Events/PaymentIntentCreated.php
+- app/Domain/Events/PaymentReceived.php
+- app/Domain/Events/PaymentValidated.php
+- app/Domain/Events/PaymentRecorded.php
+- app/Domain/Events/PaymentPartiallyAllocated.php
+- app/Domain/Events/PaymentFullyAllocated.php
+- app/Domain/Events/PaymentCompleted.php
+- app/Domain/Events/PaymentFailed.php
+- app/Domain/Events/PaymentReversed.php
+- app/Services/Payment/PaymentService.php
+- app/Policies/PaymentPolicy.php
+- app/Http/Requests/Payment/StorePaymentRequest.php
+- app/Http/Requests/Payment/UpdatePaymentRequest.php
+- app/Http/Requests/Payment/ReceivePaymentRequest.php
+- app/Http/Requests/Payment/ValidatePaymentRequest.php
+- app/Http/Requests/Payment/RecordPaymentRequest.php
+- app/Http/Requests/Payment/AllocatePaymentRequest.php
+- app/Http/Requests/Payment/CompletePaymentRequest.php
+- app/Http/Requests/Payment/ReversePaymentRequest.php
+- app/Http/Requests/Payment/FailPaymentRequest.php
+- app/Http/Resources/PaymentResource.php
+- app/Http/Controllers/PaymentController.php
+- resources/views/payments/index.blade.php
+- resources/views/payments/create.blade.php
+- resources/views/payments/edit.blade.php
+- resources/views/payments/show.blade.php
+- tests/Feature/PaymentControllerTest.php
+
+**Files Modified:**
+- database/migrations/2026_07_02_000007_create_payments_table.php
+- database/migrations/2026_07_02_000008_create_payment_allocations_table.php
+- app/Models/Payment.php
+- app/Models/PaymentAllocation.php
+- database/factories/PaymentFactory.php
+- app/Services/Billing/InvoiceService.php
+- app/Providers/AuthServiceProvider.php
+- routes/web.php
+- config/adminlte.php
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Payment now follows the Service-First Application Layer model. `PaymentService` owns lifecycle transitions, immutable-record enforcement, and allocation/reversal coordination. Payment records are append-only after recording, allocations are separately tracked and reversible, and invoice balances are synchronized through the billing service rather than direct controller logic. The module is wired into authorization, navigation, routes, and UI.
+
+**Notes:** PHP syntax checks passed for all touched files. Targeted test execution was attempted but the shell runner skipped the PHPUnit invocation, so runtime verification is still pending. The next recommended step is a clean `php artisan test --filter=PaymentControllerTest` run in a shell that allows the test process to execute.
+
+---
+
 ### 2026-07-03 | Backend | Sprint 2.2 — Subscription Module Implementation
 
 **Summary:** Implemented the complete Subscription module following the approved architecture and the Customer module as reference implementation. Deleted stub subscriptions migration (2026_07_02_000004) and created full architecture-aligned replacement (2026_07_03_000001) with 18 columns including status ENUM(pending/active/suspended/reactivation_pending/terminated), subscription_type ENUM(primary/addon), suspension_type ENUM(overdue/manual) nullable, all lifecycle timestamps (activated_at, suspended_at, reactivation_requested_at, terminated_at), billing_day, FK constraints for customer/package/onu. Created SubscriptionStatus enum (Pending/Active/Suspended/ReactivationPending/Terminated with label/badgeColor/state checks/values/options) and SubscriptionType enum (Primary/Addon) following project enum conventions. Created six Domain Events all implementing ShouldDispatchAfterCommit: SubscriptionCreated (subscription_id, customer_id), SubscriptionActivated (sub_id, customer_id), SubscriptionSuspended (sub_id, customer_id, suspensionType, reason), SubscriptionReactivationPending (sub_id, customer_id), SubscriptionReactivated (sub_id, customer_id), SubscriptionTerminated (sub_id, customer_id, reason). Replaced stub Subscription model with full implementation: all fillable columns, casts (status→SubscriptionStatus, subscription_type→SubscriptionType, all timestamps→datetime), 3 relationships (customer/package/invoices), 5 scopes (pending/active/suspended/terminated/primary), 9 state checks including isSuspendedOverdue/isSuspendedManual. Created Package stub model. Updated SubscriptionFactory with active/suspended/terminated/reactivationPending states. Created SubscriptionPolicy with before() super-admin bypass and 8 permission checks. Created 4 FormRequests: StoreSubscriptionRequest (customer_id, package_id, type, billing_day), UpdateSubscriptionRequest, SuspendSubscriptionRequest (suspension_type, suspension_reason min 5), TerminateSubscriptionRequest (reason min 10). Created SubscriptionService extending AbstractCrudService with: create() dispatching SubscriptionCreated, update(), delete() with pre-condition validation, activate() with lockForUpdate() one-active-primary enforcement + inline customer conversion (Prospect→Active + CustomerConverted dispatched), suspend() with state validation + lockForUpdate, requestReactivation() (Active→Suspended→ReactivationPending), reactivate() delegating to activate(), terminate() with open-invoice pre-condition check, buildIndexData/buildCreateData/buildEditData/findForShow view builders, applyDefaultRelationships/applyFilters/applyDefaultOrdering hooks. Created SubscriptionResource for JSON API. Created SubscriptionController (orchestration only, 12 actions: index/create/store/show/edit/update/destroy/activate/suspend/requestReactivation/reactivate/terminate). Added 12 subscription routes to web.php (resource + 5 lifecycle POST routes). Registered SubscriptionPolicy in AuthServiceProvider. Added Subscriptions item to AdminLTE navigation. Created 4 Blade views following Customer module patterns: index (table with customer/package/type/status/billing_day/activated_at, search/filter), show (2-column layout with detail card + 4-tab workspace: Overview/Invoices/Timeline/Attachments, suspend/terminate modal forms), create (customer selector, package selector, type, billing_day), edit (package/type/billing_day/notes). Created SubscriptionControllerTest with 17 test methods covering all endpoints, all lifecycle transitions, business rule enforcement (one-active-primary, prospect conversion, open-invoice pre-condition, invalid state transitions). Verified all PHP syntax clean, all 12 routes registered.
@@ -1069,4 +1122,24 @@
 **Architecture Impact:** Invoice module now follows Service-First Application Layer rules consistently: Controller handles authorize/validate/invoke/respond only; all lifecycle and business constraints are centralized in `InvoiceService`. Domain events implement `ShouldDispatchAfterCommit` semantics through the module event pattern. Migration order is now architecture-safe for fresh installs: invoices and invoice_items run before payment_allocations, resolving FK dependency correctness. Invoice immutability model is enforced in code (draft editable; published immutable except payment-driven financial fields).
 
 **Notes:** Initial focused test run failed before executing assertions due pre-existing migration order dependency (`payment_allocations.invoice_id` FK before invoices existed). This was resolved by replacing the invoice migration timestamps to run before payment allocations. A re-run of `InvoiceControllerTest` was requested but skipped in-session by user action, so final green test confirmation is pending.
+
+---
+
+### 2026-07-03 | Architecture | Sprint 2.4 Pre-Work — Payment Module Architecture Finalization
+
+**Summary:** Completed Payment module pre-work by formalizing canonical lifecycle, immutability rules, entity column specifications, missing business events, and backlog governance for implementation readiness. Added two new payment architecture decisions to `decisions.md`: (1) Payment Lifecycle Canonical States with 10 canonical persisted status values (`intent_created`, `waiting_payment`, `received`, `validated`, `recorded`, `partially_allocated`, `fully_allocated`, `completed`, `reversed`, `failed`), and (2) Payment Record and Allocation Immutability defining immutable payment records plus append-only allocation correction semantics. Expanded `entities.md` Payment and PaymentAllocation from conceptual definitions to full column-level specifications, including status enums, lifecycle timestamps, correction metadata, and explicit no-soft-delete policy for financial integrity. Added missing Payment lifecycle events `PaymentReversed` and `PaymentFailed` to `business-events.md` with full contracts (producer, consumers, triggers, audit, idempotency) and updated the event matrix. Added glossary terms `Payment Status` and `Payment Allocation Status` to standardize terminology. Updated `architecture-backlog.md` by adding Epic F (ARCH-026 through ARCH-031): ARCH-026/027/028/029 closed via this pre-work, and ARCH-030/031 created as blocking Todo items for replacing Sprint 0 payment migrations during implementation.
+
+**Files Added:** None
+
+**Files Modified:**
+- docs/architecture/decisions.md
+- docs/database/entities.md
+- docs/architecture/business-events.md
+- docs/architecture/glossary.md
+- docs/architecture/architecture-backlog.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Payment module architecture is now documentation-complete for service-layer implementation and event-driven integration. Canonical payment statuses and allocation correction semantics are explicit and enforceable, reducing ambiguity in `PaymentService`, `PaymentStatus` enum design, reporting, and downstream consumers (Billing, Subscription Lifecycle, Collector, Notification, Customer Portal). Financial immutability policy is aligned across Invoice and Payment domains with correction-through-reversal semantics. Remaining implementation blockers are now explicit backlog items: replacement of stub migrations `2026_07_02_000007_create_payments_table.php` and `2026_07_02_000008_create_payment_allocations_table.php`.
+
+**Notes:** Documentation-only pre-work. No PHP application code, routes, controllers, services, migrations, or tests were generated in this story.
 

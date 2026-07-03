@@ -507,6 +507,33 @@ One payment can allocate across multiple invoices.
 - Invoice
 - Outstanding Balance
 
+## Payment Status
+
+### Definition
+Canonical lifecycle state of a payment record in the Payment Workflow.
+
+### Notes
+Canonical values: `intent_created`, `waiting_payment`, `received`, `validated`, `recorded`, `partially_allocated`, `fully_allocated`, `completed`, `reversed`, `failed`.
+
+### Related Terms
+- Payment
+- Payment Allocation
+- Payment Workflow
+
+## Payment Allocation Status
+
+### Definition
+Lifecycle state of a payment allocation entry.
+
+### Notes
+Canonical values: `allocated`, `reversed`.
+Allocation corrections preserve history and are represented through reallocation/reversal, not deletion.
+
+### Related Terms
+- Payment Allocation
+- Financial Records Are Logically Immutable
+- Payment Workflow
+
 ## Outstanding Balance
 
 ### Definition

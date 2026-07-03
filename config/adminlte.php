@@ -359,6 +359,11 @@ return [
             'url'  => 'invoices',
             'icon' => 'fas fa-fw fa-file-invoice-dollar',
         ],
+        [
+            'text' => 'Payments',
+            'url'  => 'payments',
+            'icon' => 'fas fa-fw fa-money-bill-wave',
+        ],
 
         // Account
         ['header' => 'ACCOUNT'],

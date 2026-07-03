@@ -4,13 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Payment allocations table — Payments module.
- *
- * Stub migration retained from Sprint 0 with corrected timestamp to resolve
- * migration ordering. Depends on payments (2026_07_02_000007) and
- * invoices (2026_07_02_000005).
- */
 return new class extends Migration
 {
     public function up(): void
@@ -20,17 +13,16 @@ return new class extends Migration
             $table->foreignId('payment_id')->constrained('payments')->cascadeOnDelete();
             $table->foreignId('invoice_id')->constrained('invoices')->restrictOnDelete();
             $table->decimal('allocated_amount', 12, 2);
-
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('deleted_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('status', 20)->default('allocated')->index();
+            $table->timestamp('allocated_at');
+            $table->timestamp('reversed_at')->nullable();
+            $table->text('reversal_reason')->nullable();
+            $table->text('notes')->nullable();
 
             $table->timestamps();
-            $table->softDeletes();
 
-            $table->unique(['payment_id', 'invoice_id']);
+            $table->index(['payment_id', 'status']);
             $table->index('invoice_id');
-            $table->index('payment_id');
         });
     }
 

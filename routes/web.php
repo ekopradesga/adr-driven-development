@@ -7,6 +7,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FatController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\OltController;
+use App\Http\Controllers\OnuController;
 use App\Http\Controllers\WireRouterController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\PaymentController;
@@ -64,6 +65,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('subscriptions', SubscriptionController::class);
     Route::resource('packages', PackageController::class);
     Route::resource('olts', OltController::class);
+    Route::resource('onus', OnuController::class);
     Route::resource('routers', WireRouterController::class);
     Route::resource('fats', FatController::class);
     Route::post('packages/{package}/activate', [PackageController::class, 'activate'])->name('packages.activate');
@@ -72,6 +74,10 @@ Route::middleware('auth')->group(function () {
     Route::post('olts/{olt}/activate', [OltController::class, 'activate'])->name('olts.activate');
     Route::post('olts/{olt}/maintenance', [OltController::class, 'maintenance'])->name('olts.maintenance');
     Route::post('olts/{olt}/retire', [OltController::class, 'retire'])->name('olts.retire');
+    Route::post('onus/{onu}/activate', [OnuController::class, 'activate'])->name('onus.activate');
+    Route::post('onus/{onu}/offline', [OnuController::class, 'offline'])->name('onus.offline');
+    Route::post('onus/{onu}/suspend', [OnuController::class, 'suspend'])->name('onus.suspend');
+    Route::post('onus/{onu}/retire', [OnuController::class, 'retire'])->name('onus.retire');
     Route::post('routers/{router}/activate', [WireRouterController::class, 'activate'])->name('routers.activate');
     Route::post('routers/{router}/maintenance', [WireRouterController::class, 'maintenance'])->name('routers.maintenance');
     Route::post('routers/{router}/retire', [WireRouterController::class, 'retire'])->name('routers.retire');

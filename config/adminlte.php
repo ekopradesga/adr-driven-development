@@ -362,6 +362,11 @@ return [
             'icon' => 'fas fa-fw fa-network-wired',
         ],
         [
+            'text' => 'ONUs',
+            'url'  => 'onus',
+            'icon' => 'fas fa-fw fa-broadcast-tower',
+        ],
+        [
             'text' => 'Routers',
             'url'  => 'routers',
             'icon' => 'fas fa-fw fa-route',

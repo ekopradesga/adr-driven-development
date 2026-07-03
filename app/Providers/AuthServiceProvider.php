@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 // use Illuminate\Support\Facades\Gate;
+use App\Models\Onu;
 use App\Models\WireRouter;
+use App\Policies\OnuPolicy;
 use App\Policies\WireRouterPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -31,6 +33,7 @@ class AuthServiceProvider extends ServiceProvider
         \App\Models\ServiceArea::class   => \App\Policies\ServiceAreaPolicy::class,
         \App\Models\Package::class       => \App\Policies\PackagePolicy::class,
         \App\Models\Olt::class           => \App\Policies\OltPolicy::class,
+        Onu::class                          => OnuPolicy::class,
         WireRouter::class                   => WireRouterPolicy::class,
         \App\Models\Fat::class           => \App\Policies\FatPolicy::class,
     ];

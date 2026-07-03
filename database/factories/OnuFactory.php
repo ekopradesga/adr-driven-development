@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\OnuStatus;
 use App\Models\Fat;
 use App\Models\Olt;
 use App\Models\Onu;
@@ -24,7 +25,7 @@ class OnuFactory extends Factory
             'pon_port' => 'PON-' . fake()->numberBetween(1, 16),
             'model' => fake()->bothify('ONU-##'),
             'customer_label' => null,
-            'status' => 'unknown',
+            'status' => OnuStatus::Unprovisioned->value,
             'rx_power_dbm' => null,
             'tx_power_dbm' => null,
             'last_seen_at' => null,
@@ -34,12 +35,27 @@ class OnuFactory extends Factory
 
     public function active(): static
     {
-        return $this->state(['status' => 'active', 'last_seen_at' => now()]);
+        return $this->state(['status' => OnuStatus::Active->value, 'last_seen_at' => now()]);
     }
 
     public function offline(): static
     {
-        return $this->state(['status' => 'offline']);
+        return $this->state(['status' => OnuStatus::Offline->value]);
+    }
+
+    public function suspended(): static
+    {
+        return $this->state(['status' => OnuStatus::Suspended->value]);
+    }
+
+    public function retired(): static
+    {
+        return $this->state(['status' => OnuStatus::Retired->value]);
+    }
+
+    public function unprovisioned(): static
+    {
+        return $this->state(['status' => OnuStatus::Unprovisioned->value]);
     }
 
     public function forFat(Fat $fat): static

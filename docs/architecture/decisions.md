@@ -221,6 +221,8 @@ When conflicts occur, follow the Documentation Hierarchy defined in the Architec
 - [Monitoring & Network](#monitoring--network)
   - [OLT Lifecycle Canonical States](#decision-olt-lifecycle-canonical-states)
   - [OLT Permission Namespace and Assignment Rule](#decision-olt-permission-namespace-and-assignment-rule)
+  - [ONU Lifecycle Canonical States](#decision-onu-lifecycle-canonical-states)
+  - [ONU Permission Namespace and Assignment Rule](#decision-onu-permission-namespace-and-assignment-rule)
   - [Router Asset Lifecycle Canonical States](#decision-router-asset-lifecycle-canonical-states)
   - [Router Permission Namespace and Hierarchy Rule](#decision-router-permission-namespace-and-hierarchy-rule)
   - [FAT Lifecycle Canonical States](#decision-fat-lifecycle-canonical-states)
@@ -1288,6 +1290,47 @@ Without a canonical permission namespace and hierarchy rule, implementation may 
 - Provisioning and monitoring services can enforce status-aware Router selection consistently.
 - Router lifecycle transitions remain service-owned and auditable.
 - Router hierarchy can be represented as a self-referential topology contract in the data model.
+
+### Decision: ONU Lifecycle Canonical States
+
+#### Decision
+The canonical lifecycle states and persisted database values for ONU Management are:
+
+- `Unprovisioned` -> `unprovisioned` - Initial/default state; endpoint record exists but is not yet operationally assigned.
+- `Active` -> `active` - Endpoint is operational and may be assigned to an active subscription.
+- `Offline` -> `offline` - Endpoint is temporarily unreachable or not currently observed online.
+- `Suspended` -> `suspended` - Endpoint is administratively suspended and not eligible for new service usage.
+- `Retired` -> `retired` - Terminal historical state; endpoint is no longer operationally assignable.
+
+Monitoring health states such as unknown, healthy, warning, critical, and maintenance are separate runtime observations and must not replace the ONU lifecycle contract.
+
+#### Reason
+ONU already exists in the data model and provisioning/monitoring documentation, but the repository lacks a canonical lifecycle contract for the application layer. Canonicalization is required before ONU enums, policies, provisioning guards, and UI actions can be implemented consistently.
+
+#### Impact
+- `OnuStatus` enum can be implemented without ambiguity.
+- `onus.status` default must be `unprovisioned`.
+- Subscription assignment must resolve to `active` ONU assets only.
+- Monitoring health remains outside the ONU asset lifecycle.
+
+### Decision: ONU Permission Namespace and Assignment Rule
+
+#### Decision
+ONU Management uses the `onu.*` permission namespace and the following assignment governance:
+
+- ONU CRUD and lifecycle actions are authorized through `onu.view`, `onu.create`, `onu.update`, `onu.activate`, `onu.offline`, `onu.suspend`, `onu.retire`, and `onu.export`.
+- Only `active` ONU assets may receive new subscription assignment.
+- `offline`, `suspended`, and `retired` ONU assets remain historically visible but must not be used for new service allocation.
+- ONU topology assignment must remain anchored to an owning OLT and may optionally reference one FAT scope record for downstream reachability correlation.
+
+#### Reason
+Without a canonical permission namespace and assignment rule, implementation may either overload broad `network.*` permissions or allow provisioning actions against non-operational endpoints while leaving ONU ownership ambiguous.
+
+#### Impact
+- Policies, seeders, and navigation can reference one stable ONU namespace.
+- Provisioning and monitoring services can enforce status-aware ONU selection consistently.
+- ONU lifecycle transitions remain service-owned and auditable.
+- ONU ownership can be represented as an OLT-owned child aggregate with optional FAT correlation.
 
 ### Decision: FAT Lifecycle Canonical States
 

@@ -85,6 +85,18 @@ class PermissionSeeder extends Seeder
             ['key' => 'olt.export',      'name' => 'Export OLT Data',              'category' => 'olt'],
 
             // ----------------------------------------------------------------
+            // ONU Management
+            // ----------------------------------------------------------------
+            ['key' => 'onu.view',        'name' => 'View ONU Assets',              'category' => 'onu'],
+            ['key' => 'onu.create',      'name' => 'Create ONU Assets',            'category' => 'onu'],
+            ['key' => 'onu.update',      'name' => 'Update ONU Assets',            'category' => 'onu'],
+            ['key' => 'onu.activate',    'name' => 'Activate ONU Assets',          'category' => 'onu'],
+            ['key' => 'onu.offline',     'name' => 'Mark ONU Assets Offline',      'category' => 'onu'],
+            ['key' => 'onu.suspend',     'name' => 'Suspend ONU Assets',           'category' => 'onu'],
+            ['key' => 'onu.retire',      'name' => 'Retire ONU Assets',            'category' => 'onu'],
+            ['key' => 'onu.export',      'name' => 'Export ONU Data',              'category' => 'onu'],
+
+            // ----------------------------------------------------------------
             // Router Management
             // ----------------------------------------------------------------
             ['key' => 'router.view',        'name' => 'View Router Assets',              'category' => 'router'],

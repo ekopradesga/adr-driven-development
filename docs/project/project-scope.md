@@ -194,9 +194,11 @@ Manages Fiber Access Terminal records as distribution terminals connecting the f
 
 Manages Dropcore records representing physical last-mile drop segments from FAT to customer endpoint.
 
-## ONT Management
+## ONU Management
 
-Manages Optical Network Terminal records as the customer-side optical endpoint for service delivery.
+Manages Optical Network Unit records as the customer-side optical endpoint for service delivery.
+
+ONT remains an operational alias where vendor-specific topology terminology requires it.
 
 ## Area and Assignment Management
 

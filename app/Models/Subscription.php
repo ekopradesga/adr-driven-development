@@ -63,6 +63,11 @@ class Subscription extends Model
         return $this->belongsTo(Package::class);
     }
 
+    public function onu(): BelongsTo
+    {
+        return $this->belongsTo(Onu::class);
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);

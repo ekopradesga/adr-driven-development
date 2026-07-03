@@ -1644,5 +1644,63 @@
 
 **Architecture Impact:** Router lifecycle is now service-owned and policy-protected with canonical asset lifecycle values separated from monitoring health states. Router status checks, parent topology validation, and lifecycle transitions are implemented consistently with the new Router workflow and permission namespace.
 
+---
+
+### 2026-07-04 | Documentation | Sprint 3.7 Pre-Work — ONU Management Scope Alignment
+
+**Summary:** Aligned the project scope and architecture contract for ONU Management before implementation by replacing the stale ONT Management scope heading with ONU Management, formalizing ONU lifecycle states and `onu.*` permission governance, and clarifying that ONT remains a vendor alias while ONU is the canonical platform term.
+
+**Files Added:**
+- database/migrations/2026_07_04_000002_update_onu_status_default.php
+
+**Files Modified:**
+- docs/project/project-scope.md
+- docs/architecture/decisions.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** ONU Management now has an explicit lifecycle and permission namespace contract aligned with the documented ONU terminology, enabling the application layer to implement `unprovisioned`, `active`, `offline`, `suspended`, and `retired` states consistently.
+
+**Notes:** The existing ONU storage default was normalized from `unknown` to `unprovisioned` for compatibility with the documented lifecycle contract.
+
+---
+
+### 2026-07-04 | Backend | Sprint 3.7 — ONU Module Implementation
+
+**Summary:** Implemented the ONU module as an OLT-owned network endpoint workflow. Added the ONU status enum, ONU model lifecycle casting and relations, ONU service, policy, controller, form requests, migration to normalize the stored status default, AdminLTE views, feature test, route registration, policy registration, sidebar navigation, and ONU RBAC permissions/role assignments. ONU lifecycle operations now support create, activate, mark offline, suspend, and retire flows.
+
+**Files Added:**
+- app/Enums/OnuStatus.php
+- app/Policies/OnuPolicy.php
+- app/Services/Network/OnuService.php
+- app/Http/Controllers/OnuController.php
+- app/Http/Requests/Onu/ActivateOnuRequest.php
+- app/Http/Requests/Onu/OfflineOnuRequest.php
+- app/Http/Requests/Onu/RetireOnuRequest.php
+- app/Http/Requests/Onu/StoreOnuRequest.php
+- app/Http/Requests/Onu/SuspendOnuRequest.php
+- app/Http/Requests/Onu/UpdateOnuRequest.php
+- database/migrations/2026_07_04_000002_update_onu_status_default.php
+- resources/views/onus/index.blade.php
+- resources/views/onus/create.blade.php
+- resources/views/onus/edit.blade.php
+- resources/views/onus/show.blade.php
+- resources/views/onus/partials/form.blade.php
+- tests/Feature/OnuModuleTest.php
+
+**Files Modified:**
+- app/Models/Onu.php
+- app/Models/Subscription.php
+- database/factories/OnuFactory.php
+- app/Providers/AuthServiceProvider.php
+- routes/web.php
+- config/adminlte.php
+- database/seeders/PermissionSeeder.php
+- database/seeders/RolePermissionSeeder.php
+- docs/project/project-scope.md
+- docs/architecture/decisions.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** ONU Management now follows the documented lifecycle contract and permission namespace, with ONU-specific UI, route, policy, and service layers in place. Subscription ownership guards and FAT topology validation were added to preserve ownership boundaries and downstream distribution rules.
+
 **Notes:** Static validation passed (`get_errors` found no errors in touched files and dependencies). A targeted `php artisan test --filter=RouterModuleTest` run was attempted, but this environment returned no output, so runtime confirmation remains pending.
 

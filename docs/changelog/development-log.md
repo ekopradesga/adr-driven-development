@@ -1036,6 +1036,36 @@
 
 ---
 
+### 2026-07-03 | Backend | Sprint 2.5 — Payment Allocation Implementation
+
+**Summary:** Implemented the first-class Payment Allocation surface on top of the existing payment workflow. Added allocation-specific events, policy, controller, requests, resource, nested routes, views, and feature tests. Extended `PaymentService` with allocation reversal and reallocation operations so confirmed allocation history remains append-only while invoice balances stay synchronized. Added `PaymentReallocated` to the domain event layer and exposed allocation views from the payment workspace.
+
+**Files Added:**
+- app/Domain/Events/PaymentReallocated.php
+- app/Policies/PaymentAllocationPolicy.php
+- app/Http/Requests/PaymentAllocation/ReversePaymentAllocationRequest.php
+- app/Http/Requests/PaymentAllocation/ReallocatePaymentAllocationRequest.php
+- app/Http/Resources/PaymentAllocationResource.php
+- app/Http/Controllers/PaymentAllocationController.php
+- resources/views/payment_allocations/index.blade.php
+- resources/views/payment_allocations/show.blade.php
+- tests/Feature/PaymentAllocationControllerTest.php
+
+**Files Modified:**
+- app/Enums/PaymentAllocationStatus.php
+- app/Models/PaymentAllocation.php
+- app/Services/Payment/PaymentService.php
+- app/Providers/AuthServiceProvider.php
+- routes/web.php
+- resources/views/payments/show.blade.php
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Payment Allocation now has its own authorization, HTTP routes, and audit-facing UI, while payment balance adjustments still flow through the Payment and Invoice services. Allocation reversal and reallocation preserve history instead of editing financial rows in place, matching the payment immutability decision and the `PaymentReallocated` business event contract.
+
+**Notes:** PHP static validation passed for all edited allocation files. Targeted PHPUnit execution was not run because the shell runner skipped the test command in this environment.
+
+---
+
 ### 2026-07-03 | Backend | Sprint 2.2 — Subscription Module Implementation
 
 **Summary:** Implemented the complete Subscription module following the approved architecture and the Customer module as reference implementation. Deleted stub subscriptions migration (2026_07_02_000004) and created full architecture-aligned replacement (2026_07_03_000001) with 18 columns including status ENUM(pending/active/suspended/reactivation_pending/terminated), subscription_type ENUM(primary/addon), suspension_type ENUM(overdue/manual) nullable, all lifecycle timestamps (activated_at, suspended_at, reactivation_requested_at, terminated_at), billing_day, FK constraints for customer/package/onu. Created SubscriptionStatus enum (Pending/Active/Suspended/ReactivationPending/Terminated with label/badgeColor/state checks/values/options) and SubscriptionType enum (Primary/Addon) following project enum conventions. Created six Domain Events all implementing ShouldDispatchAfterCommit: SubscriptionCreated (subscription_id, customer_id), SubscriptionActivated (sub_id, customer_id), SubscriptionSuspended (sub_id, customer_id, suspensionType, reason), SubscriptionReactivationPending (sub_id, customer_id), SubscriptionReactivated (sub_id, customer_id), SubscriptionTerminated (sub_id, customer_id, reason). Replaced stub Subscription model with full implementation: all fillable columns, casts (status→SubscriptionStatus, subscription_type→SubscriptionType, all timestamps→datetime), 3 relationships (customer/package/invoices), 5 scopes (pending/active/suspended/terminated/primary), 9 state checks including isSuspendedOverdue/isSuspendedManual. Created Package stub model. Updated SubscriptionFactory with active/suspended/terminated/reactivationPending states. Created SubscriptionPolicy with before() super-admin bypass and 8 permission checks. Created 4 FormRequests: StoreSubscriptionRequest (customer_id, package_id, type, billing_day), UpdateSubscriptionRequest, SuspendSubscriptionRequest (suspension_type, suspension_reason min 5), TerminateSubscriptionRequest (reason min 10). Created SubscriptionService extending AbstractCrudService with: create() dispatching SubscriptionCreated, update(), delete() with pre-condition validation, activate() with lockForUpdate() one-active-primary enforcement + inline customer conversion (Prospect→Active + CustomerConverted dispatched), suspend() with state validation + lockForUpdate, requestReactivation() (Active→Suspended→ReactivationPending), reactivate() delegating to activate(), terminate() with open-invoice pre-condition check, buildIndexData/buildCreateData/buildEditData/findForShow view builders, applyDefaultRelationships/applyFilters/applyDefaultOrdering hooks. Created SubscriptionResource for JSON API. Created SubscriptionController (orchestration only, 12 actions: index/create/store/show/edit/update/destroy/activate/suspend/requestReactivation/reactivate/terminate). Added 12 subscription routes to web.php (resource + 5 lifecycle POST routes). Registered SubscriptionPolicy in AuthServiceProvider. Added Subscriptions item to AdminLTE navigation. Created 4 Blade views following Customer module patterns: index (table with customer/package/type/status/billing_day/activated_at, search/filter), show (2-column layout with detail card + 4-tab workspace: Overview/Invoices/Timeline/Attachments, suspend/terminate modal forms), create (customer selector, package selector, type, billing_day), edit (package/type/billing_day/notes). Created SubscriptionControllerTest with 17 test methods covering all endpoints, all lifecycle transitions, business rule enforcement (one-active-primary, prospect conversion, open-invoice pre-condition, invalid state transitions). Verified all PHP syntax clean, all 12 routes registered.

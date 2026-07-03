@@ -10,6 +10,7 @@ use App\Domain\Events\PaymentPartiallyAllocated;
 use App\Domain\Events\PaymentReceived;
 use App\Domain\Events\PaymentRecorded;
 use App\Domain\Events\PaymentReversed;
+use App\Domain\Events\PaymentReallocated;
 use App\Domain\Events\PaymentValidated;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentStatus;
@@ -282,6 +283,95 @@ class PaymentService extends AbstractCrudService
         });
     }
 
+    public function reverseAllocation(PaymentAllocation $allocation, string $reason): PaymentAllocation
+    {
+        return DB::transaction(function () use ($allocation, $reason) {
+            $allocation = PaymentAllocation::lockForUpdate()->findOrFail($allocation->id);
+
+            if (!$allocation->isAllocated()) {
+                throw ValidationException::withMessages([
+                    'status' => 'Only allocated payment allocations may be reversed.',
+                ]);
+            }
+
+            $payment = Payment::lockForUpdate()->findOrFail($allocation->payment_id);
+
+            $allocation->update([
+                'status' => PaymentAllocationStatus::Reversed->value,
+                'reversed_at' => now(),
+                'reversal_reason' => $reason,
+            ]);
+
+            $this->invoiceService->reversePaymentAllocation($allocation->invoice, (float) $allocation->allocated_amount);
+            $this->syncPaymentStatusAfterAllocationChange($payment);
+
+            return $allocation->fresh(['payment', 'invoice']);
+        });
+    }
+
+    public function reallocateAllocation(PaymentAllocation $allocation, int $invoiceId, float $allocatedAmount, ?string $notes = null): PaymentAllocation
+    {
+        return DB::transaction(function () use ($allocation, $invoiceId, $allocatedAmount, $notes) {
+            $allocation = PaymentAllocation::lockForUpdate()->findOrFail($allocation->id);
+
+            if (!$allocation->isAllocated()) {
+                throw ValidationException::withMessages([
+                    'status' => 'Only allocated payment allocations may be reallocated.',
+                ]);
+            }
+
+            if ($allocatedAmount <= 0) {
+                throw ValidationException::withMessages([
+                    'allocated_amount' => 'Allocated amount must be greater than zero.',
+                ]);
+            }
+
+            $payment = Payment::lockForUpdate()->findOrFail($allocation->payment_id);
+            $targetInvoice = Invoice::lockForUpdate()->findOrFail($invoiceId);
+
+            $allocation->update([
+                'status' => PaymentAllocationStatus::Reversed->value,
+                'reversed_at' => now(),
+                'reversal_reason' => 'Reallocated to invoice ' . $targetInvoice->invoice_number,
+            ]);
+
+            $this->invoiceService->reversePaymentAllocation($allocation->invoice, (float) $allocation->allocated_amount);
+
+            $availableAfterReverse = $payment->unallocatedAmount();
+
+            if ($allocatedAmount > $availableAfterReverse) {
+                throw ValidationException::withMessages([
+                    'allocated_amount' => 'Reallocated amount exceeds available payment balance.',
+                ]);
+            }
+
+            $newAllocation = PaymentAllocation::create([
+                'payment_id' => $payment->id,
+                'invoice_id' => $targetInvoice->id,
+                'allocated_amount' => $allocatedAmount,
+                'status' => PaymentAllocationStatus::Allocated->value,
+                'allocated_at' => now(),
+                'notes' => $notes,
+            ]);
+
+            $this->invoiceService->recordPaymentAllocation($targetInvoice, $allocatedAmount);
+            $this->syncPaymentStatusAfterAllocationChange($payment);
+
+            event(new PaymentReallocated(
+                $payment->id,
+                $payment->customer_id,
+                $allocation->id,
+                $newAllocation->id,
+                $allocation->invoice_id,
+                $targetInvoice->id,
+                $allocatedAmount,
+                auth()->id()
+            ));
+
+            return $newAllocation->fresh(['payment', 'invoice']);
+        });
+    }
+
     public function fail(Payment $payment, string $reason): Payment
     {
         return DB::transaction(function () use ($payment, $reason) {
@@ -339,6 +429,25 @@ class PaymentService extends AbstractCrudService
         ];
     }
 
+    public function buildAllocationIndexData(Payment $payment): array
+    {
+        $payment->loadMissing(['customer', 'allocations.invoice']);
+
+        return [
+            'payment' => $payment,
+            'allocations' => $payment->allocations()->with('invoice')->latest('allocated_at')->get(),
+        ];
+    }
+
+    public function findAllocationForShow(PaymentAllocation $allocation): array
+    {
+        $allocation->loadMissing(['payment.customer', 'invoice']);
+
+        return [
+            'allocation' => $allocation,
+        ];
+    }
+
     protected function applyDefaultRelationships(Builder $query): Builder
     {
         return $query->with(['customer', 'receiver']);
@@ -389,5 +498,20 @@ class PaymentService extends AbstractCrudService
         $sequence = (int) substr($latest, -6);
 
         return $prefix . str_pad((string) ($sequence + 1), 6, '0', STR_PAD_LEFT);
+    }
+
+    private function syncPaymentStatusAfterAllocationChange(Payment $payment): void
+    {
+        $allocatedAmount = (float) $payment->allocations()
+            ->where('status', PaymentAllocationStatus::Allocated->value)
+            ->sum('allocated_amount');
+
+        $status = match (true) {
+            $allocatedAmount <= 0 => PaymentStatus::Recorded->value,
+            $allocatedAmount >= (float) $payment->amount => PaymentStatus::FullyAllocated->value,
+            default => PaymentStatus::PartiallyAllocated->value,
+        };
+
+        $payment->update(['status' => $status]);
     }
 }

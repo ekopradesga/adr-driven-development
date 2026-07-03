@@ -3,6 +3,7 @@
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentAllocationController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ProfileController;
@@ -41,6 +42,13 @@ Route::middleware('auth')->group(function () {
     Route::post('payments/{payment}/complete', [PaymentController::class, 'complete'])->name('payments.complete');
     Route::post('payments/{payment}/reverse', [PaymentController::class, 'reverse'])->name('payments.reverse');
     Route::post('payments/{payment}/fail', [PaymentController::class, 'fail'])->name('payments.fail');
+
+    Route::prefix('payments/{payment}')->group(function () {
+        Route::get('allocations', [PaymentAllocationController::class, 'index'])->name('payments.allocations.index');
+        Route::get('allocations/{allocation}', [PaymentAllocationController::class, 'show'])->name('payments.allocations.show');
+        Route::post('allocations/{allocation}/reverse', [PaymentAllocationController::class, 'reverse'])->name('payments.allocations.reverse');
+        Route::post('allocations/{allocation}/reallocate', [PaymentAllocationController::class, 'reallocate'])->name('payments.allocations.reallocate');
+    });
 
     // -------------------------------------------------------------------------
     // Subscription Management

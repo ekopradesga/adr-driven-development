@@ -21,6 +21,7 @@ class AuthServiceProvider extends ServiceProvider
         \App\Models\Subscription::class  => \App\Policies\SubscriptionPolicy::class,
         \App\Models\Invoice::class       => \App\Policies\InvoicePolicy::class,
         \App\Models\Payment::class       => \App\Policies\PaymentPolicy::class,
+        \App\Models\PaymentAllocation::class => \App\Policies\PaymentAllocationPolicy::class,
     ];
 
     public function boot(): void

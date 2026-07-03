@@ -40,6 +40,16 @@ class PaymentAllocation extends Model
         return $this->belongsTo(Invoice::class);
     }
 
+    public function scopeAllocated($query)
+    {
+        return $query->where('status', PaymentAllocationStatus::Allocated->value);
+    }
+
+    public function scopeReversed($query)
+    {
+        return $query->where('status', PaymentAllocationStatus::Reversed->value);
+    }
+
     public function isAllocated(): bool
     {
         return $this->status === PaymentAllocationStatus::Allocated;

@@ -18,6 +18,9 @@
                 @if ($payment->isReceived())
                     <form method="POST" action="{{ route('payments.validate', $payment) }}">@csrf<button class="btn btn-sm btn-info"><i class="fas fa-check-double mr-1"></i> Validate</button></form>
                 @endif
+                        @can('viewAny', \App\Models\PaymentAllocation::class)
+                            <a href="{{ route('payments.allocations.index', $payment) }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-list mr-1"></i> Allocations</a>
+                        @endcan
             @endcan
             @can('record', $payment)
                 @if ($payment->isValidated())

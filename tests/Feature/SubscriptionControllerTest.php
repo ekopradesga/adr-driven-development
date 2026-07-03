@@ -5,11 +5,14 @@ namespace Tests\Feature;
 use App\Enums\CustomerStatus;
 use App\Enums\SubscriptionStatus;
 use App\Enums\SubscriptionType;
+use App\Jobs\Provisioning\ProvisionOnuJob;
 use App\Models\Customer;
+use App\Models\Onu;
 use App\Models\Role;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 /**
@@ -98,6 +101,27 @@ class SubscriptionControllerTest extends TestCase
             'id'     => $subscription->id,
             'status' => 'active',
         ]);
+    }
+
+    public function test_activate_dispatches_provision_onu_job_when_onu_is_assigned(): void
+    {
+        Queue::fake();
+
+        $customer = $this->customer();
+        $onu = Onu::factory()->create();
+        $subscription = Subscription::factory()->create([
+            'customer_id' => $customer->id,
+            'package_id' => 1,
+            'onu_id' => $onu->id,
+        ]);
+
+        $this->actingAs($this->adminUser())
+            ->post(route('subscriptions.activate', $subscription));
+
+        Queue::assertPushed(ProvisionOnuJob::class, function (ProvisionOnuJob $job) use ($onu, $subscription) {
+            return $job->onuId === $onu->id
+                && $job->subscriptionId === $subscription->id;
+        });
     }
 
     public function test_activate_converts_prospect_customer_to_active(): void

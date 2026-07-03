@@ -13,6 +13,7 @@ use App\Enums\CustomerStatus;
 use App\Enums\PackageStatus;
 use App\Enums\SubscriptionStatus;
 use App\Enums\SubscriptionType;
+use App\Jobs\Provisioning\ProvisionOnuJob;
 use App\Models\Customer;
 use App\Models\Package;
 use App\Models\Subscription;
@@ -161,6 +162,14 @@ class SubscriptionService extends AbstractCrudService
                     $subscription->customer_id,
                     auth()->id()
                 ));
+            }
+
+            if ($subscription->onu_id) {
+                ProvisionOnuJob::dispatch(
+                    $subscription->onu_id,
+                    $subscription->id,
+                    auth()->id()
+                )->onQueue('default-provisioning')->afterCommit();
             }
 
             return $subscription->fresh();

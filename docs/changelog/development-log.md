@@ -1704,3 +1704,22 @@
 
 **Notes:** Static validation passed (`get_errors` found no errors in touched files and dependencies). A targeted `php artisan test --filter=RouterModuleTest` run was attempted, but this environment returned no output, so runtime confirmation remains pending.
 
+---
+
+### 2026-07-04 | Backend | Sprint 3.8 — Provision Job
+
+**Summary:** Implemented the queued ONU provisioning job and wired it into Subscription activation so assigned ONUs can be provisioned after commit. Added a retryable `ProvisionOnuJob`, normalized ONU status handling for the provisioning flow, and added a subscription feature test that verifies the provisioning job is queued when an ONU is assigned.
+
+**Files Added:**
+- app/Jobs/Provisioning/ProvisionOnuJob.php
+
+**Files Modified:**
+- app/Services/Subscription/SubscriptionService.php
+- tests/Feature/SubscriptionControllerTest.php
+- docs/architecture/queue.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Provisioning now has an explicit queued job contract with retry/backoff behavior and after-commit dispatch from Subscription activation. This aligns the runtime flow with the documented provisioning queue pattern and gives ONU provisioning a dedicated execution unit.
+
+**Notes:** `ProvisionOnuJob` currently performs the local ONU status transition and retry-safe audit logging; external adapter integration can be layered on later without changing the job contract.
+

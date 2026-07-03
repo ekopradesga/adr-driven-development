@@ -1146,9 +1146,9 @@ class SendInvoiceEmailJob implements ShouldQueue
 - Queue: `high` (invoice generation), `default` (email)
 - Tries: 3, Timeout: 120s (PDF generation)
 
-### Phase 4: Provisioning Jobs (Sprint 1.7+)
+### Phase 4: Provisioning Jobs (Sprint 3.8)
 
-- Implement `ProvisionOnuJob`
+- `ProvisionOnuJob` implemented
 - Implement `DeprovisionOnuJob`
 - Implement `SyncOnuConfigJob`
 - Queue: `default-provisioning`

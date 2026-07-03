@@ -86,6 +86,17 @@ class PermissionSeeder extends Seeder
             ['key' => 'collector.export',   'name' => 'Export Collector Work',   'category' => 'collector'],
 
             // ----------------------------------------------------------------
+            // Service Area
+            // ----------------------------------------------------------------
+            ['key' => 'service-area.view',    'name' => 'View Service Areas and Clusters',   'category' => 'service-area'],
+            ['key' => 'service-area.create',  'name' => 'Create Service Areas and Clusters', 'category' => 'service-area'],
+            ['key' => 'service-area.update',  'name' => 'Update Service Areas and Clusters', 'category' => 'service-area'],
+            ['key' => 'service-area.assign',  'name' => 'Assign Employees to Service Areas', 'category' => 'service-area'],
+            ['key' => 'service-area.merge',   'name' => 'Merge Service Areas',                'category' => 'service-area'],
+            ['key' => 'service-area.archive', 'name' => 'Archive Service Areas and Clusters', 'category' => 'service-area'],
+            ['key' => 'service-area.export',  'name' => 'Export Service Area Data',           'category' => 'service-area'],
+
+            // ----------------------------------------------------------------
             // Payments
             // ----------------------------------------------------------------
             ['key' => 'payment.view',     'name' => 'View Payments',         'category' => 'payment'],

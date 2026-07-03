@@ -4,15 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Clusters table — Customer Management module.
- *
- * Stub migration providing the clusters table as an FK dependency for the
- * customers table. Full Cluster module (lifecycle, CRUD, reporting, area
- * assignment) is a separate implementation story.
- *
- * Reference: docs/database/entities.md — Cluster entity
- */
 return new class extends Migration
 {
     public function up(): void
@@ -20,10 +11,14 @@ return new class extends Migration
         Schema::create('clusters', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('status', 30)->default('active')->index();
+            $table->string('code', 50)->unique();
+            $table->string('status', 30)->default('planned')->index();
+            $table->text('description')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('name');
         });
     }
 

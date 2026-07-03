@@ -1361,6 +1361,43 @@ Often represented in a hierarchy such as Region, Branch, Area, and FAT context.
 - Area-Based Visibility
 - Collector
 
+## Cluster Status
+
+### Definition
+The lifecycle state of a `Cluster` operational grouping.
+
+### Notes
+Canonical states are Planned, Active, and Inactive.
+
+### Related Terms
+- Cluster
+- Service Area
+
+## Service Area Status
+
+### Definition
+The lifecycle state of a `ServiceArea` operational territory.
+
+### Notes
+Canonical states are Draft, Active, Merged, and Archived.
+
+### Related Terms
+- Service Area
+- Area-Based Visibility
+
+## Employee Service Area Assignment
+
+### Definition
+The administrative linkage between an employee profile and one or more service areas for assignment and visibility purposes.
+
+### Notes
+Assignments may include one primary service area used as the default operational context.
+
+### Related Terms
+- Employee
+- Service Area
+- Area-Based Visibility
+
 ## Geographic Coordinates
 
 ### Definition

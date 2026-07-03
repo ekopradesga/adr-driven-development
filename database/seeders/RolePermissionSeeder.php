@@ -123,6 +123,7 @@ class RolePermissionSeeder extends Seeder
             'dashboard.view',
             'customer.view', 'customer.create', 'customer.update',
             'subscription.view', 'subscription.update',
+            'service-area.view',
             'ticket.view', 'ticket.create', 'ticket.update', 'ticket.assign', 'ticket.close',
             'report.view',
         ]));
@@ -136,6 +137,7 @@ class RolePermissionSeeder extends Seeder
             'customer.view',
             'subscription.view',
             'billing.view',
+            'service-area.view',
             'collector.view', 'collector.create', 'collector.update', 'collector.assign', 'collector.schedule', 'collector.route', 'collector.visit', 'collector.complete', 'collector.cancel',
         ]));
 
@@ -164,6 +166,7 @@ class RolePermissionSeeder extends Seeder
             'subscription.view',
             'billing.view',
             'payment.view',
+            'service-area.view', 'service-area.create', 'service-area.update', 'service-area.assign', 'service-area.merge', 'service-area.archive',
             'network.view',
             'monitoring.view',
             'ticket.view', 'ticket.assign',

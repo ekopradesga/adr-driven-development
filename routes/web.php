@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ClusterController;
 use App\Http\Controllers\CollectionTaskController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\EmployeeController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ServiceAreaController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -69,6 +71,20 @@ Route::middleware('auth')->group(function () {
     Route::post('customers/{customer}/suspend',    [CustomerController::class, 'suspend'])->name('customers.suspend');
     Route::post('customers/{customer}/reactivate', [CustomerController::class, 'reactivate'])->name('customers.reactivate');
     Route::post('customers/{customer}/terminate',  [CustomerController::class, 'terminate'])->name('customers.terminate');
+
+    // -------------------------------------------------------------------------
+    // Area and Assignment Management
+    // -------------------------------------------------------------------------
+    Route::resource('clusters', ClusterController::class);
+    Route::post('clusters/{cluster}/activate', [ClusterController::class, 'activate'])->name('clusters.activate');
+    Route::post('clusters/{cluster}/inactivate', [ClusterController::class, 'inactivate'])->name('clusters.inactivate');
+
+    Route::resource('service-areas', ServiceAreaController::class)->parameters(['service-areas' => 'service_area']);
+    Route::post('service-areas/{service_area}/activate', [ServiceAreaController::class, 'activate'])->name('service-areas.activate');
+    Route::post('service-areas/{service_area}/merge', [ServiceAreaController::class, 'merge'])->name('service-areas.merge');
+    Route::post('service-areas/{service_area}/archive', [ServiceAreaController::class, 'archive'])->name('service-areas.archive');
+    Route::post('service-areas/{service_area}/employees', [ServiceAreaController::class, 'assignEmployee'])->name('service-areas.employees.assign');
+    Route::delete('service-areas/{service_area}/employees/{employee}', [ServiceAreaController::class, 'removeEmployee'])->name('service-areas.employees.remove');
 
     // -------------------------------------------------------------------------
     // Collector / Field Collections

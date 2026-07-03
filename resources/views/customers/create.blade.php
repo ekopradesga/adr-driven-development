@@ -130,6 +130,39 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="cluster_id">Cluster</label>
+                                    <select id="cluster_id" name="cluster_id"
+                                            class="form-control @error('cluster_id') is-invalid @enderror">
+                                        <option value="">Select cluster...</option>
+                                        @foreach ($clusters as $cluster)
+                                            <option value="{{ $cluster->id }}" {{ (string) old('cluster_id') === (string) $cluster->id ? 'selected' : '' }}>
+                                                {{ $cluster->code }} — {{ $cluster->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('cluster_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="service_area_id">Service Area</label>
+                                    <select id="service_area_id" name="service_area_id"
+                                            class="form-control @error('service_area_id') is-invalid @enderror">
+                                        <option value="">Select service area...</option>
+                                        @foreach ($serviceAreas as $serviceArea)
+                                            <option value="{{ $serviceArea->id }}" {{ (string) old('service_area_id') === (string) $serviceArea->id ? 'selected' : '' }}>
+                                                {{ $serviceArea->code }} — {{ $serviceArea->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('service_area_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                            </div>
+                        </div>
+
                         <hr>
 
                         {{-- Notes --}}

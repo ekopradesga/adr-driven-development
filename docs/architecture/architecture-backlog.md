@@ -932,6 +932,58 @@ The Collector workflow is documented, but the repository does not yet contain a 
 
 ---
 
+### ARCH-033
+
+**Title:** Service Area and Cluster Schema Finalization
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Description:**
+
+The repository contains only stub `clusters` and `service_areas` migrations and models. The implementation boundary still lacks canonical column-level schemas, lifecycle metadata, hierarchy rules, and merge fields required for safe module generation.
+
+**Recommended Action:**
+
+1. Define the exact `clusters` and `service_areas` column contracts including lifecycle fields and self-referencing hierarchy/merge linkage
+2. Finalize the assignment pivot contract used for employee-to-service-area linkage
+3. Clarify the aggregate root boundary between Cluster and ServiceArea
+
+**Resolution (2026-07-03):** `docs/database/entities.md` now defines canonical column-level schemas for `Cluster` and `ServiceArea`, including `parent_id`, `merged_into_service_area_id`, lifecycle timestamps, and the `employee_service_area` pivot contract. `docs/architecture/decisions.md` now defines canonical lifecycle states and assignment rules.
+
+---
+
+### ARCH-034
+
+**Title:** Service Area Workflow, Events, and Visibility Contract
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Description:**
+
+Area and Assignment Management is in project scope, but the repository lacks an authoritative workflow, event contract, and visibility model for cluster/service area lifecycle transitions and employee area scoping.
+
+**Recommended Action:**
+
+1. Create a dedicated workflow document covering cluster and service area lifecycle transitions
+2. Document the canonical business events emitted by the module
+3. Formalize area-based visibility resolution through employee service area assignment
+
+**Resolution (2026-07-03):** `docs/workflows/service-area-workflow.md` now defines the authoritative lifecycle and assignment rules for Cluster and ServiceArea. `docs/architecture/business-events.md` now defines cluster and service area lifecycle events. `docs/architecture/glossary.md`, `docs/database/erd.md`, and `docs/architecture/decisions.md` now document the visibility and relationship contract used by the module.
+
+---
+
 # Closed Items
 
 ### ARCH-032
@@ -950,6 +1002,38 @@ The Collector workflow is documented, but the repository does not yet contain a 
 
 ---
 
+### ARCH-033
+
+**Title:** Service Area and Cluster Schema Finalization
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Resolution (2026-07-03):** `docs/database/entities.md` now defines canonical column-level schemas for `Cluster` and `ServiceArea`, including hierarchy and merge linkage plus the `employee_service_area` pivot contract. `docs/architecture/decisions.md` now defines the canonical lifecycle states and assignment rules required for implementation.
+
+---
+
+### ARCH-034
+
+**Title:** Service Area Workflow, Events, and Visibility Contract
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Resolution (2026-07-03):** `docs/workflows/service-area-workflow.md`, `docs/architecture/business-events.md`, `docs/database/erd.md`, `docs/architecture/glossary.md`, and `docs/architecture/decisions.md` now define the module workflow, lifecycle events, area-based visibility, and relationship contract.
+
+---
+
 ## Backlog Summary
 
 **Last Updated:** 2026-07-03
@@ -959,7 +1043,7 @@ The Collector workflow is documented, but the repository does not yet contain a 
 | Priority | Count | Open Items | Closed Items |
 |---|---|---|---|
 | **Critical** | 7 | 0 | ARCH-001, ARCH-002, ARCH-003, ARCH-019, ARCH-020, ARCH-026, ARCH-027 |
-| **High** | 15 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025, ARCH-028, ARCH-029, ARCH-032 |
+| **High** | 17 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025, ARCH-028, ARCH-029, ARCH-032, ARCH-033, ARCH-034 |
 | **Medium** | 4 | ARCH-010, ARCH-011, ARCH-013 | ARCH-024 |
 | **Low** | 3 | ARCH-012, ARCH-014, ARCH-015 | — |
 | **Investigation** | 3 | ARCH-016, ARCH-018 | ARCH-017 |
@@ -968,7 +1052,7 @@ The Collector workflow is documented, but the repository does not yet contain a 
 
 | Status | Count | Items |
 |---|---|---|
-| **Closed** | 21 | ARCH-001–007, ARCH-017, ARCH-019–029, ARCH-032 |
+| **Closed** | 23 | ARCH-001–007, ARCH-017, ARCH-019–029, ARCH-032, ARCH-033, ARCH-034 |
 | **Todo** | 4 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 |
 | **Open** | 2 | ARCH-016, ARCH-018 |
 | **Deferred** | 6 | ARCH-010, ARCH-011, ARCH-012, ARCH-013, ARCH-014, ARCH-015 |
@@ -982,6 +1066,7 @@ The Collector workflow is documented, but the repository does not yet contain a 
 | Subscription | ✅ Architecture approved | None (ARCH-019–025 all closed) |
 | Payment | ❌ Pre-work completed, implementation blocked | ARCH-030, ARCH-031 |
 | Collector | ✅ Architecture approved | None |
+| Service Area | ✅ Architecture approved | None |
 
 ---
 

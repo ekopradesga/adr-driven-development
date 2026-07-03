@@ -351,6 +351,22 @@ return [
             'url'  => 'subscriptions',
             'icon' => 'fas fa-fw fa-wifi',
         ],
+        [
+            'text' => 'Territories',
+            'icon' => 'fas fa-fw fa-map-marked-alt',
+            'submenu' => [
+                [
+                    'text' => 'Clusters',
+                    'url'  => 'clusters',
+                    'icon' => 'fas fa-fw fa-sitemap',
+                ],
+                [
+                    'text' => 'Service Areas',
+                    'url'  => 'service-areas',
+                    'icon' => 'fas fa-fw fa-draw-polygon',
+                ],
+            ],
+        ],
 
         // Billing Management
         ['header' => 'BILLING'],

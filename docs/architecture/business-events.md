@@ -170,6 +170,386 @@ AI-driven onboarding workflow initiation.
 
 ---
 
+## ClusterCreated
+
+### Event Name
+`ClusterCreated`
+
+### Description
+A new operational cluster has been defined for future or active territory governance.
+
+### Category
+Domain Event
+
+### Producer
+Area and Assignment Management
+
+### Consumers
+- Timeline
+- Activity Log
+
+### Trigger
+An authorized actor creates a new cluster record.
+
+### Business Meaning
+The platform now has a new operational grouping available for staged or active use.
+
+### Related Workflow
+Service Area Workflow — Cluster Planned state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+No.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Cluster identity, actor, and creation timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automatic cluster capacity and coverage reporting.
+
+---
+
+## ClusterActivated
+
+### Event Name
+`ClusterActivated`
+
+### Description
+An operational cluster has become active for customer and territory assignment.
+
+### Category
+Domain Event
+
+### Producer
+Area and Assignment Management
+
+### Consumers
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor activates a planned or inactive cluster.
+
+### Business Meaning
+The cluster is now valid for active service area and customer assignment.
+
+### Related Workflow
+Service Area Workflow — Cluster Active state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+No.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Activation actor, previous state, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automatic workload rebalance triggers.
+
+---
+
+## ClusterInactivated
+
+### Event Name
+`ClusterInactivated`
+
+### Description
+An operational cluster has been removed from new assignment use while retaining historical references.
+
+### Category
+Domain Event
+
+### Producer
+Area and Assignment Management
+
+### Consumers
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor inactivates an active cluster.
+
+### Business Meaning
+The cluster remains historical but can no longer receive new operational assignments.
+
+### Related Workflow
+Service Area Workflow — Cluster Inactive state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal governance notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Inactivation actor, reason, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automated dependency warnings before inactivation.
+
+---
+
+## ServiceAreaCreated
+
+### Event Name
+`ServiceAreaCreated`
+
+### Description
+A new service area has been defined for operational territory governance.
+
+### Category
+Domain Event
+
+### Producer
+Area and Assignment Management
+
+### Consumers
+- Timeline
+- Activity Log
+
+### Trigger
+An authorized actor creates a new service area in draft state.
+
+### Business Meaning
+The platform has a new territory definition available for staged preparation.
+
+### Related Workflow
+Service Area Workflow — Service Area Draft state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+No.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Cluster context, hierarchy parent, actor, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Boundary validation and GIS enrichment.
+
+---
+
+## ServiceAreaActivated
+
+### Event Name
+`ServiceAreaActivated`
+
+### Description
+A service area has become active for customer assignment and area-based visibility.
+
+### Category
+Domain Event
+
+### Producer
+Area and Assignment Management
+
+### Consumers
+- Timeline
+- Activity Log
+- Reporting
+- Identity & Access
+
+### Trigger
+An authorized actor activates a draft service area.
+
+### Business Meaning
+The service area is now operationally available for workload assignment and visibility scope.
+
+### Related Workflow
+Service Area Workflow — Service Area Active state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal operational notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Activation actor, prior state, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automatic workload publication to dependent modules.
+
+---
+
+## ServiceAreaMerged
+
+### Event Name
+`ServiceAreaMerged`
+
+### Description
+A source service area has been consolidated into another active destination service area.
+
+### Category
+Integration Event
+
+### Producer
+Area and Assignment Management
+
+### Consumers
+- Customer Management
+- Collector Workflow
+- Ticket Workflow
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor completes a merge after reassignment preconditions are satisfied.
+
+### Business Meaning
+The source service area is terminal and its operational scope has been transferred to a destination area.
+
+### Related Workflow
+Service Area Workflow — Service Area Merged state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal change notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Source area, destination area, reassignment context, actor, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Medium. Downstream consumers must treat merge propagation as safe to repeat.
+
+### Future Extensions
+Automatic customer and assignment migration assistance.
+
+---
+
+## ServiceAreaArchived
+
+### Event Name
+`ServiceAreaArchived`
+
+### Description
+A service area has been retired from active use without merge.
+
+### Category
+Domain Event
+
+### Producer
+Area and Assignment Management
+
+### Consumers
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor archives an active or draft service area after dependency checks pass.
+
+### Business Meaning
+The service area remains historical but is no longer assignable.
+
+### Related Workflow
+Service Area Workflow — Service Area Archived state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal governance notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Archive actor, reason, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Archive retention automation.
+
+---
+
 ## CustomerUpdated
 
 ### Event Name
@@ -2817,6 +3197,13 @@ Impersonation session summary report for compliance review.
 |---|---|---|---|---|
 | CustomerRegistered | Customer Management | Notification, Timeline, Activity Log, Customer Portal | Normal | Domain |
 | CustomerUpdated | Customer Management | Timeline, Activity Log, Notification | Low | Domain |
+| ClusterCreated | Area and Assignment Management | Timeline, Activity Log | Low | Domain |
+| ClusterActivated | Area and Assignment Management | Timeline, Activity Log, Reporting | Low | Domain |
+| ClusterInactivated | Area and Assignment Management | Timeline, Activity Log, Reporting | Low | Domain |
+| ServiceAreaCreated | Area and Assignment Management | Timeline, Activity Log | Low | Domain |
+| ServiceAreaActivated | Area and Assignment Management | Identity & Access, Timeline, Activity Log, Reporting | Low | Domain |
+| ServiceAreaMerged | Area and Assignment Management | Customer Management, Collector Workflow, Ticket Workflow, Timeline, Activity Log, Reporting | Normal | Integration |
+| ServiceAreaArchived | Area and Assignment Management | Timeline, Activity Log, Reporting | Low | Domain |
 | SubscriptionActivated | Subscription Lifecycle | Billing, Provisioning, Monitoring, Notification, Timeline, Activity Log, Customer Portal | High | Integration |
 | SubscriptionSuspended | Subscription Lifecycle | Provisioning, Collector, Notification, Timeline, Activity Log, Customer Portal | High | Integration |
 | SubscriptionReactivated | Subscription Lifecycle | Provisioning, Billing, Notification, Timeline, Activity Log, Customer Portal | High | Integration |

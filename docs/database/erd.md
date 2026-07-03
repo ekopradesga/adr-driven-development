@@ -83,6 +83,7 @@ erDiagram
 
 ## Relationship Explanations
 - Cluster (1) -> (N) ServiceArea
+- ServiceArea (0..1) -> (N) ServiceArea (hierarchy via `parent_id`)
 - ServiceArea (1) -> (N) Customer
 - ServiceArea (N) -> (N) Employee
 - Cluster (1) -> (N) Customer
@@ -110,6 +111,8 @@ The following polymorphic relationships exist on Customer but are not shown in t
 - ServiceRequest belongs to Customer and may reference Subscription.
 - WorkOrder belongs to ServiceRequest and assigned Employee.
 - Customer belongs to one ServiceArea and one Cluster.
+- ServiceArea belongs to one Cluster and may belong to one parent ServiceArea.
+- Employee-to-ServiceArea assignment is implemented through the `employee_service_area` pivot table.
 - QRCodeReference belongs to Customer (generated on Prospect → Active transition).
 - Invoice belongs to Subscription and Customer (dual FK — intentional denormalization for Customer 360 performance).
 - Payment belongs to Customer (direct FK — intentional denormalization for Customer 360 performance).
@@ -118,6 +121,7 @@ The following polymorphic relationships exist on Customer but are not shown in t
 - Customer uses Soft Delete with pre-condition validation. Restrict when any Invoice with status `published`/`overdue`/`paid` exists, OR any Payment record exists, OR any active PaymentAllocation exists, OR any active Subscription exists, OR any open Ticket exists, OR any pending ServiceRequest exists. Draft Invoices do NOT trigger Restrict.
 - Subscription uses Soft Delete for non-financial contexts, Restrict when invoices/payments exist.
 - Cluster and ServiceArea use Soft Delete or Archive with Restrict on active dependencies.
+- ServiceArea merge is modeled as terminal source state with self-reference to destination, not as delete-and-recreate.
 - ServiceRequest uses Soft Delete and Archive after closure.
 - WorkOrder uses Soft Delete or Archive after completion.
 

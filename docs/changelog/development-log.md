@@ -1210,6 +1210,96 @@
 
 ---
 
+### 2026-07-03 | Architecture | Sprint 3.1 Pre-Work — Service Area Module Architecture Finalization
+
+**Summary:** Completed Service Area module pre-work by formalizing the Area and Assignment Management architecture contract. Added canonical lifecycle decisions for `Cluster` and `ServiceArea`, defined the `employee_service_area` assignment pivot and the `service-area.*` permission namespace, created a dedicated `service-area-workflow.md`, expanded `entities.md` with column-level schemas and merge/hierarchy fields, updated `erd.md` with hierarchy and pivot ownership rules, added cluster and service area lifecycle business events, and closed two new Service Area architecture backlog items.
+
+**Files Added:**
+- docs/workflows/service-area-workflow.md
+
+**Files Modified:**
+- docs/architecture/decisions.md
+- docs/architecture/glossary.md
+- docs/architecture/business-events.md
+- docs/database/entities.md
+- docs/database/erd.md
+- docs/architecture/architecture-backlog.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Service Area is now implementation-ready from an architecture standpoint. The module has canonical lifecycle states, hierarchy and merge semantics, explicit employee-to-area assignment rules, a stable permission namespace, and a documented business event surface aligned with area-based visibility and downstream operational consumers.
+
+**Notes:** Documentation-only pre-work. No application code was generated in this step.
+
+---
+
+### 2026-07-03 | Backend | Sprint 3.1 — Service Area Module Implementation
+
+**Summary:** Implemented the complete Service Area module on top of the finalized Area and Assignment Management architecture. Replaced stub Cluster and ServiceArea persistence with canonical migrations, enums, models, events, services, policies, requests, routes, factories, and AdminLTE views. Added employee-to-service-area assignment through `employee_service_area`, wired cluster activation/inactivation and service area activation/merge/archive lifecycle actions, and integrated active cluster/service area selection into the customer create/edit forms. Added the `service-area.*` RBAC namespace to seeders and covered the main module flow with targeted feature tests.
+
+**Files Added:**
+- app/Enums/ClusterStatus.php
+- app/Enums/ServiceAreaStatus.php
+- app/Enums/ServiceAreaLevel.php
+- app/Domain/Events/ClusterCreated.php
+- app/Domain/Events/ClusterActivated.php
+- app/Domain/Events/ClusterInactivated.php
+- app/Domain/Events/ServiceAreaCreated.php
+- app/Domain/Events/ServiceAreaActivated.php
+- app/Domain/Events/ServiceAreaMerged.php
+- app/Domain/Events/ServiceAreaArchived.php
+- app/Services/ServiceArea/ClusterService.php
+- app/Services/ServiceArea/ServiceAreaService.php
+- app/Policies/ClusterPolicy.php
+- app/Policies/ServiceAreaPolicy.php
+- app/Http/Controllers/ClusterController.php
+- app/Http/Controllers/ServiceAreaController.php
+- app/Http/Requests/ServiceArea/StoreClusterRequest.php
+- app/Http/Requests/ServiceArea/UpdateClusterRequest.php
+- app/Http/Requests/ServiceArea/ActivateClusterRequest.php
+- app/Http/Requests/ServiceArea/InactivateClusterRequest.php
+- app/Http/Requests/ServiceArea/StoreServiceAreaRequest.php
+- app/Http/Requests/ServiceArea/UpdateServiceAreaRequest.php
+- app/Http/Requests/ServiceArea/ActivateServiceAreaRequest.php
+- app/Http/Requests/ServiceArea/MergeServiceAreaRequest.php
+- app/Http/Requests/ServiceArea/ArchiveServiceAreaRequest.php
+- app/Http/Requests/ServiceArea/AssignEmployeeToServiceAreaRequest.php
+- app/Http/Requests/ServiceArea/RemoveEmployeeFromServiceAreaRequest.php
+- database/migrations/2026_07_03_000004_create_employee_service_area_table.php
+- database/factories/ClusterFactory.php
+- database/factories/ServiceAreaFactory.php
+- resources/views/clusters/index.blade.php
+- resources/views/clusters/create.blade.php
+- resources/views/clusters/edit.blade.php
+- resources/views/clusters/show.blade.php
+- resources/views/service_areas/index.blade.php
+- resources/views/service_areas/create.blade.php
+- resources/views/service_areas/edit.blade.php
+- resources/views/service_areas/show.blade.php
+- tests/Feature/ServiceAreaModuleTest.php
+
+**Files Modified:**
+- app/Models/Cluster.php
+- app/Models/ServiceArea.php
+- app/Models/Employee.php
+- app/Models/User.php
+- app/Services/Customer/CustomerService.php
+- app/Providers/AuthServiceProvider.php
+- database/migrations/2026_07_02_000001_create_clusters_table.php
+- database/migrations/2026_07_02_000002_create_service_areas_table.php
+- database/seeders/PermissionSeeder.php
+- database/seeders/RolePermissionSeeder.php
+- routes/web.php
+- config/adminlte.php
+- resources/views/customers/create.blade.php
+- resources/views/customers/edit.blade.php
+- docs/changelog/development-log.md
+
+**Architecture Impact:** Service Area now follows the architecture-first contract with canonical cluster/service area lifecycle states, hierarchy and merge semantics, employee assignment pivot governance, and the `service-area.*` permission namespace. The implementation stays service-first and uses only the documented lifecycle events and state transitions.
+
+**Notes:** Static validation passed for all touched PHP and Blade files. A targeted `php artisan test --filter=ServiceAreaModuleTest` run was attempted, but this environment again returned no usable test output, so runtime confirmation remains pending.
+
+---
+
 ### 2026-07-03 | Backend | Sprint 2.6 — Collector Module Implementation
 
 **Summary:** Implemented the first collector module slice from the now-finalized architecture contract. Added the `Employee`, `CollectionTask`, and `CollectionTaskInvoice` aggregates with supporting enums, migrations, factories, policies, requests, controllers, services, routes, and AdminLTE views. Wired the canonical collector lifecycle operations for assignment, scheduling, route start, customer visit recording, completion, follow-up, cancellation, and invoice targeting/resolution. Added the `CollectorAssigned`, `CollectorVisitStarted`, and `CollectorVisitCompleted` domain events and seeded the new `collector.*` permission namespace into RBAC.

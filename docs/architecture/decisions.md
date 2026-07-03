@@ -184,6 +184,8 @@ When conflicts occur, follow the Documentation Hierarchy defined in the Architec
   - [Customer and Subscription Boundaries](#decision-customer-and-subscription-boundaries)
   - [One Active Primary Subscription](#decision-one-active-primary-subscription)
   - [Cluster and Service Area Model](#decision-cluster-and-service-area-model)
+  - [Cluster and Service Area Lifecycle Canonical States](#decision-cluster-and-service-area-lifecycle-canonical-states)
+  - [Service Area Assignment and Permission Namespace](#decision-service-area-assignment-and-permission-namespace)
   - [Geographic Service Coverage](#decision-geographic-service-coverage)
   - [Customer Lifecycle Canonical States](#decision-customer-lifecycle-canonical-states)
   - [Customer Type Classification for v1.0](#decision-customer-type-classification-for-v10)
@@ -594,6 +596,52 @@ Field operations are territory-driven.
 #### Impact
 - Better workload distribution and reporting.
 - Consistent territory governance.
+
+### Decision: Cluster and Service Area Lifecycle Canonical States
+
+#### Decision
+The canonical lifecycle states and persisted database values for Area and Assignment Management are:
+
+- `Cluster`
+  - `Planned` → `planned` — Initial/default state; prepared for future operational use.
+  - `Active` → `active` — Used for customer assignment, reporting, and workload grouping.
+  - `Inactive` → `inactive` — No longer available for new operational assignment while preserving historical references.
+
+- `ServiceArea`
+  - `Draft` → `draft` — Defined but not yet active for assignment. Initial/default state.
+  - `Active` → `active` — Available for customer assignment, area-based visibility, and field routing.
+  - `Merged` → `merged` — Source service area has been consolidated into another active service area. Terminal source state.
+  - `Archived` → `archived` — Retired from active use without merge. Terminal state.
+
+Service area merges must preserve source history by recording `merged_into_service_area_id` and `merged_at` on the source record.
+
+#### Reason
+The repository currently contains only stub `clusters` and `service_areas` tables and models. Canonical lifecycle states are required before enums, migrations, filters, services, and policies can be implemented consistently.
+
+#### Impact
+- `ClusterStatus` and `ServiceAreaStatus` enums can be generated without ambiguity.
+- `clusters.status` default must be `planned`.
+- `service_areas.status` default must be `draft`.
+- Merge semantics are explicit before implementation.
+
+### Decision: Service Area Assignment and Permission Namespace
+
+#### Decision
+Area and Assignment Management uses the following canonical assignment and authorization rules:
+
+- `ServiceArea` is the aggregate root for hierarchical territory management.
+- Hierarchy is represented by a nullable self-referencing `parent_id` on `service_areas`.
+- Employee-to-service-area assignment is modeled through `employee_service_area` with `employee_id`, `service_area_id`, `is_primary`, `assigned_at`, `created_at`, and `updated_at`.
+- Area-based visibility resolves through the authenticated user's linked `Employee` profile and its assigned service areas, unless an active role grants global scope.
+- Service Area module permissions use the `service-area.*` namespace for both cluster and service area administration.
+
+#### Reason
+The module must implement CRUD, visibility scoping, and assignment administration without inventing a hierarchy model, assignment pivot contract, or permission naming convention during code generation.
+
+#### Impact
+- `service_areas.parent_id` and `service_areas.merged_into_service_area_id` are required architecture fields.
+- `employee_service_area` becomes the stable visibility and assignment contract.
+- Policies, navigation, seeders, and controllers can reference `service-area.*` consistently.
 
 ### Decision: Geographic Service Coverage
 

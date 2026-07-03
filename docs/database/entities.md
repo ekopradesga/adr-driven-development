@@ -531,15 +531,31 @@ Planned -> Active -> Inactive.
 
 Deletion behavior: Soft Delete when no active dependent entities; Restrict otherwise.
 
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `name` | VARCHAR(255) | No | Human-readable cluster name |
+| `code` | VARCHAR(50) | No | Unique operational code |
+| `status` | ENUM | No | `planned` (default), `active`, `inactive` |
+| `description` | TEXT | Yes | Optional operational description |
+| `notes` | TEXT | Yes | Internal notes |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+| `deleted_at` | TIMESTAMP | Yes | Soft delete |
+
 ### Relationships
 - Cluster 1 -> N Customer
 - Cluster 1 -> N ServiceArea
 
 ### Key Attributes
-Cluster name, operational boundary, reporting classification.
+Cluster name, operational code, reporting classification, lifecycle status.
 
 ### Business Rules
 Cluster is an operational grouping, not a network cluster.
+
+Active service areas and customer assignments require an active cluster.
 
 ### Notes
 Cluster boundaries may be represented as polygons for planning.
@@ -554,7 +570,7 @@ Yes
 Core
 
 ### Lifecycle Reference
-N/A
+docs/workflows/service-area-workflow.md
 
 ### Immutability
 Mutable
@@ -569,7 +585,9 @@ Yes
 - Global Search: No
 
 ### Produces Events
-None
+- ClusterCreated
+- ClusterActivated
+- ClusterInactivated
 
 ### Consumes Events
 None
@@ -587,16 +605,56 @@ Draft -> Active -> Merged -> Archived.
 
 Deletion behavior: Soft Delete or Archive; Restrict if assigned customers exist.
 
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `cluster_id` | BIGINT UNSIGNED | No | FK → clusters.id (RESTRICT) |
+| `parent_id` | BIGINT UNSIGNED | Yes | Self FK → service_areas.id (RESTRICT). Nullable for root areas. |
+| `merged_into_service_area_id` | BIGINT UNSIGNED | Yes | Self FK → service_areas.id (RESTRICT). Destination area when source is merged. |
+| `name` | VARCHAR(255) | No | Service area display name |
+| `code` | VARCHAR(50) | No | Unique operational code |
+| `level` | ENUM | No | `region`, `branch`, or `area` |
+| `boundary_geojson` | LONGTEXT | Yes | Optional administrative polygon or boundary document |
+| `center_latitude` | DECIMAL(10,7) | Yes | Map/navigation reference point |
+| `center_longitude` | DECIMAL(11,7) | Yes | Map/navigation reference point |
+| `status` | ENUM | No | `draft` (default), `active`, `merged`, `archived` |
+| `merged_at` | TIMESTAMP | Yes | When status became `merged` |
+| `archived_at` | TIMESTAMP | Yes | When status became `archived` |
+| `notes` | TEXT | Yes | Internal notes |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+| `deleted_at` | TIMESTAMP | Yes | Soft delete |
+
 ### Relationships
 - ServiceArea 1 -> N Customer
 - ServiceArea N -> N Employee
-- ServiceArea 1 -> N Cluster
+- ServiceArea N -> 1 Cluster
+- ServiceArea 0..1 -> N ServiceArea (hierarchy via parent_id)
 
 ### Key Attributes
-Area name, hierarchy position, boundary definition, operational status.
+Area name, operational code, hierarchy level, boundary definition, map center, lifecycle status.
 
 ### Business Rules
 Area assignment determines data visibility and workload assignment.
+
+Draft, merged, and archived service areas must not receive new customer assignments.
+
+Service area hierarchies must remain acyclic.
+
+Merge operations must reassign active customers and employee assignments before the source area becomes terminal.
+
+Employee-to-service-area assignment uses the `employee_service_area` pivot with:
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `employee_id` | BIGINT UNSIGNED | No | FK → employees.id (CASCADE) |
+| `service_area_id` | BIGINT UNSIGNED | No | FK → service_areas.id (CASCADE) |
+| `is_primary` | BOOLEAN | No | Default `false`; only one active primary assignment per employee |
+| `assigned_at` | TIMESTAMP | Yes | Administrative assignment timestamp |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
 
 ### Notes
 Typical hierarchy: Region -> Branch -> Area.
@@ -605,13 +663,13 @@ Typical hierarchy: Region -> Branch -> Area.
 Cluster
 
 ### Aggregate Root
-No
+Yes
 
 ### Classification
 Core
 
 ### Lifecycle Reference
-N/A
+docs/workflows/service-area-workflow.md
 
 ### Immutability
 Mutable
@@ -626,7 +684,10 @@ Yes
 - Global Search: No
 
 ### Produces Events
-None
+- ServiceAreaCreated
+- ServiceAreaActivated
+- ServiceAreaMerged
+- ServiceAreaArchived
 
 ### Consumes Events
 None

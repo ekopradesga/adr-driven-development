@@ -9,7 +9,9 @@ use App\Domain\Events\CustomerTerminated;
 use App\Domain\Events\CustomerUpdated;
 use App\Enums\CustomerStatus;
 use App\Enums\CustomerType;
+use App\Models\Cluster;
 use App\Models\Customer;
+use App\Models\ServiceArea;
 use App\Services\AbstractCrudService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
@@ -284,6 +286,8 @@ class CustomerService extends AbstractCrudService
         return [
             'statuses' => CustomerStatus::cases(),
             'types'    => CustomerType::cases(),
+            'clusters' => Cluster::active()->orderBy('name')->get(),
+            'serviceAreas' => ServiceArea::active()->orderBy('name')->get(),
         ];
     }
 
@@ -296,6 +300,8 @@ class CustomerService extends AbstractCrudService
             'customer' => $customer,
             'statuses' => CustomerStatus::cases(),
             'types'    => CustomerType::cases(),
+            'clusters' => Cluster::active()->orderBy('name')->get(),
+            'serviceAreas' => ServiceArea::active()->orderBy('name')->get(),
         ];
     }
 

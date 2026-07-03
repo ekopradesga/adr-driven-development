@@ -6,6 +6,7 @@ use App\Enums\EmployeeStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -34,6 +35,13 @@ class Employee extends Model
     public function collectionTasks(): HasMany
     {
         return $this->hasMany(CollectionTask::class);
+    }
+
+    public function serviceAreas(): BelongsToMany
+    {
+        return $this->belongsToMany(ServiceArea::class)
+            ->withPivot(['is_primary', 'assigned_at'])
+            ->withTimestamps();
     }
 
     public function scopeActive($query)

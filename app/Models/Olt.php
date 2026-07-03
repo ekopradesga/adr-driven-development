@@ -43,6 +43,11 @@ class Olt extends Model
         return $this->hasMany(Onu::class);
     }
 
+    public function odfs(): HasMany
+    {
+        return $this->hasMany(Odf::class);
+    }
+
     public function scopePlanned($query)
     {
         return $query->where('status', OltStatus::Planned->value);

@@ -316,6 +316,7 @@ erDiagram
     FAT ||--o{ DROPCORE : extends
     FAT ||--o{ ONT : terminates
     OLT ||--o{ ONU : controls
+    FAT o|--o{ ONU : serves_scope
     SUBSCRIPTION o|--|| ONT : active_endpoint
     SUBSCRIPTION o|--|| ONU : active_endpoint
     OLT ||--o{ MONITORING_EVENT : emits
@@ -338,6 +339,7 @@ erDiagram
 - FAT (1) -> (N) Dropcore
 - FAT (1) -> (N) ONT
 - OLT (1) -> (N) ONU
+- FAT (0..1) -> (N) ONU
 - Subscription (0..1) -> (1) active ONT endpoint
 - Subscription (0..1) -> (1) active ONU endpoint
 - OLT (1) -> (N) MonitoringEvent
@@ -356,6 +358,7 @@ erDiagram
 - Dropcore belongs to FAT.
 - ONT belongs to FAT.
 - ONU belongs to OLT.
+- ONU may optionally reference one FAT for downstream distribution scope.
 - MonitoringEvent belongs to its source asset.
 
 ## Deletion Behavior

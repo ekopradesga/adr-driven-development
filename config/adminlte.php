@@ -362,6 +362,11 @@ return [
             'icon' => 'fas fa-fw fa-network-wired',
         ],
         [
+            'text' => 'FATs',
+            'url'  => 'fats',
+            'icon' => 'fas fa-fw fa-project-diagram',
+        ],
+        [
             'text' => 'Territories',
             'icon' => 'fas fa-fw fa-map-marked-alt',
             'submenu' => [

@@ -387,6 +387,223 @@ Asset retirement archive workflow.
 
 ---
 
+## FatCreated
+
+### Event Name
+`FatCreated`
+
+### Description
+A new FAT asset record has been registered in planned state.
+
+### Category
+Domain Event
+
+### Producer
+FAT Management
+
+### Consumers
+- Timeline
+- Activity Log
+
+### Trigger
+An authorized actor creates a new FAT asset record.
+
+### Business Meaning
+The platform has a new FAT asset available for staged operational preparation.
+
+### Related Workflow
+FAT Workflow - Planned state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+No.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+FAT identity, actor, and creation timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automatic field-topology onboarding checklist.
+
+---
+
+## FatActivated
+
+### Event Name
+`FatActivated`
+
+### Description
+A FAT asset has become operationally available for downstream distribution scope.
+
+### Category
+Domain Event
+
+### Producer
+FAT Management
+
+### Consumers
+- Provisioning Workflow
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor activates a planned or maintenance FAT asset.
+
+### Business Meaning
+The FAT is now valid for new downstream operational assignment.
+
+### Related Workflow
+FAT Workflow - Active state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal operational notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Activation actor, previous state, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Automatic field-capacity publication.
+
+---
+
+## FatMaintenanceStarted
+
+### Event Name
+`FatMaintenanceStarted`
+
+### Description
+A FAT asset has been placed into maintenance lifecycle state.
+
+### Category
+Domain Event
+
+### Producer
+FAT Management
+
+### Consumers
+- Provisioning Workflow
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor transitions an active FAT into maintenance state.
+
+### Business Meaning
+The FAT remains historical and monitored but is unavailable for new downstream assignment.
+
+### Related Workflow
+FAT Workflow - Maintenance state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal maintenance notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Maintenance actor, previous state, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Maintenance window linkage automation.
+
+---
+
+## FatRetired
+
+### Event Name
+`FatRetired`
+
+### Description
+A FAT asset has been retired from operational use.
+
+### Category
+Domain Event
+
+### Producer
+FAT Management
+
+### Consumers
+- Timeline
+- Activity Log
+- Reporting
+
+### Trigger
+An authorized actor retires a FAT after dependency validation passes.
+
+### Business Meaning
+The FAT is terminal and no longer valid for operational assignment.
+
+### Related Workflow
+FAT Workflow - Retired state
+
+### Timeline Impact
+Yes.
+
+### Activity Log Impact
+Yes.
+
+### Notification Impact
+Conditional. Internal retirement notification when policy requires.
+
+### Customer Portal Impact
+No.
+
+### Audit Requirement
+Retirement actor, dependency context, and timestamp must be preserved.
+
+### Idempotency
+Yes.
+
+### Retry Consideration
+Low risk.
+
+### Future Extensions
+Asset retirement archive workflow.
+
+---
+
 ## ClusterCreated
 
 ### Event Name
@@ -3635,6 +3852,10 @@ Impersonation session summary report for compliance review.
 | OltActivated | OLT Management | Provisioning Workflow, Timeline, Activity Log, Reporting | Low | Domain |
 | OltMaintenanceStarted | OLT Management | Provisioning Workflow, Timeline, Activity Log, Reporting | Low | Domain |
 | OltRetired | OLT Management | Timeline, Activity Log, Reporting | Low | Domain |
+| FatCreated | FAT Management | Timeline, Activity Log | Low | Domain |
+| FatActivated | FAT Management | Provisioning Workflow, Timeline, Activity Log, Reporting | Low | Domain |
+| FatMaintenanceStarted | FAT Management | Provisioning Workflow, Timeline, Activity Log, Reporting | Low | Domain |
+| FatRetired | FAT Management | Timeline, Activity Log, Reporting | Low | Domain |
 | ClusterCreated | Area and Assignment Management | Timeline, Activity Log | Low | Domain |
 | ClusterActivated | Area and Assignment Management | Timeline, Activity Log, Reporting | Low | Domain |
 | ClusterInactivated | Area and Assignment Management | Timeline, Activity Log, Reporting | Low | Domain |

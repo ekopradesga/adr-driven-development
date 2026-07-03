@@ -85,6 +85,17 @@ class PermissionSeeder extends Seeder
             ['key' => 'olt.export',      'name' => 'Export OLT Data',              'category' => 'olt'],
 
             // ----------------------------------------------------------------
+            // FAT Management
+            // ----------------------------------------------------------------
+            ['key' => 'fat.view',        'name' => 'View FAT Assets',               'category' => 'fat'],
+            ['key' => 'fat.create',      'name' => 'Create FAT Assets',             'category' => 'fat'],
+            ['key' => 'fat.update',      'name' => 'Update FAT Assets',             'category' => 'fat'],
+            ['key' => 'fat.activate',    'name' => 'Activate FAT Assets',           'category' => 'fat'],
+            ['key' => 'fat.maintenance', 'name' => 'Move FAT Assets to Maintenance','category' => 'fat'],
+            ['key' => 'fat.retire',      'name' => 'Retire FAT Assets',             'category' => 'fat'],
+            ['key' => 'fat.export',      'name' => 'Export FAT Data',               'category' => 'fat'],
+
+            // ----------------------------------------------------------------
             // Billing
             // ----------------------------------------------------------------
             ['key' => 'billing.view',     'name' => 'View Billing Records', 'category' => 'billing'],

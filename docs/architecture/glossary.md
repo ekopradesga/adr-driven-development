@@ -743,10 +743,31 @@ Fiber Access Terminal used as a downstream distribution point in the network.
 ### Notes
 Used in both topology context and operational area hierarchy examples.
 
+Operational FAT reachability is derived from downstream ONU endpoint observations, not from the FAT lifecycle column itself.
+
 ### Related Terms
 - OLT
 - ONT
 - Service Area
+
+## FAT Status
+
+### Definition
+The lifecycle state of a `FAT` asset record. Expressed as the `fats.status` column and the `FatStatus` PHP backed enum.
+
+### Notes
+The four canonical states are:
+- **Planned** (`planned`) - registered but not operationally assignable. Default.
+- **Active** (`active`) - assignable for downstream distribution scope.
+- **Maintenance** (`maintenance`) - temporarily unavailable for new assignment.
+- **Retired** (`retired`) - terminal historical state.
+
+FAT Status is distinct from monitoring-derived downstream reachability, which is computed from the mapped ONU set under the FAT.
+
+### Related Terms
+- FAT
+- ONU
+- ODF
 
 ## Dropcore
 

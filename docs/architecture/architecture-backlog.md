@@ -1036,6 +1036,32 @@ OLT Management is in project scope, but the repository still lacks an authoritat
 
 ---
 
+### ARCH-037
+
+**Title:** FAT Module Topology, Schema, and Derived Reachability Contract Finalization
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Description:**
+
+FAT Management is in project scope, but the repository lacks an authoritative implementation contract for FAT lifecycle states, parent ODF dependency schema, permission namespace, and the downstream ONU-derived reachability rule requested for operational status evaluation.
+
+**Recommended Action:**
+
+1. Define canonical FAT lifecycle states distinct from monitoring-derived reachability
+2. Create a dedicated FAT workflow document covering parent ODF dependency and downstream ONU ping aggregation
+3. Finalize ODF/FAT column contracts and the FAT-to-ONU distribution scope reference before module generation
+
+**Resolution (2026-07-03):** `docs/workflows/fat-workflow.md` now defines FAT lifecycle transitions and downstream reachability rules. `docs/architecture/decisions.md` now defines canonical FAT lifecycle states and `fat.*` permission namespace. `docs/database/entities.md` now defines implementation-grade ODF/FAT schemas and the optional ONU `fat_id` mapping used for downstream reachability aggregation. `docs/database/erd.md` now includes the FAT-to-ONU scope reference. `docs/architecture/business-events.md` now defines FAT lifecycle business events. `docs/architecture/glossary.md` now includes `FAT Status`.
+
+---
+
 # Closed Items
 
 ### ARCH-032
@@ -1118,6 +1144,22 @@ OLT Management is in project scope, but the repository still lacks an authoritat
 
 ---
 
+### ARCH-037
+
+**Title:** FAT Module Topology, Schema, and Derived Reachability Contract Finalization
+
+**Priority:** High
+
+**Status:** Closed
+
+**Target Version:** v1.0
+
+**Blocking:** No
+
+**Resolution (2026-07-03):** `docs/workflows/fat-workflow.md`, `docs/architecture/decisions.md`, `docs/database/entities.md`, `docs/database/erd.md`, `docs/architecture/business-events.md`, and `docs/architecture/glossary.md` now define FAT lifecycle states, parent ODF support schema, downstream ONU scope mapping, reachability derivation rules, permission namespace, and event contracts required for implementation.
+
+---
+
 ## Backlog Summary
 
 **Last Updated:** 2026-07-03
@@ -1127,7 +1169,7 @@ OLT Management is in project scope, but the repository still lacks an authoritat
 | Priority | Count | Open Items | Closed Items |
 |---|---|---|---|
 | **Critical** | 7 | 0 | ARCH-001, ARCH-002, ARCH-003, ARCH-019, ARCH-020, ARCH-026, ARCH-027 |
-| **High** | 19 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025, ARCH-028, ARCH-029, ARCH-032, ARCH-033, ARCH-034, ARCH-035, ARCH-036 |
+| **High** | 20 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 | ARCH-004, ARCH-005, ARCH-006, ARCH-007, ARCH-021, ARCH-022, ARCH-023, ARCH-025, ARCH-028, ARCH-029, ARCH-032, ARCH-033, ARCH-034, ARCH-035, ARCH-036, ARCH-037 |
 | **Medium** | 4 | ARCH-010, ARCH-011, ARCH-013 | ARCH-024 |
 | **Low** | 3 | ARCH-012, ARCH-014, ARCH-015 | — |
 | **Investigation** | 3 | ARCH-016, ARCH-018 | ARCH-017 |
@@ -1136,7 +1178,7 @@ OLT Management is in project scope, but the repository still lacks an authoritat
 
 | Status | Count | Items |
 |---|---|---|
-| **Closed** | 25 | ARCH-001–007, ARCH-017, ARCH-019–029, ARCH-032, ARCH-033, ARCH-034, ARCH-035, ARCH-036 |
+| **Closed** | 26 | ARCH-001–007, ARCH-017, ARCH-019–029, ARCH-032, ARCH-033, ARCH-034, ARCH-035, ARCH-036, ARCH-037 |
 | **Todo** | 4 | ARCH-008, ARCH-009, ARCH-030, ARCH-031 |
 | **Open** | 2 | ARCH-016, ARCH-018 |
 | **Deferred** | 6 | ARCH-010, ARCH-011, ARCH-012, ARCH-013, ARCH-014, ARCH-015 |
@@ -1153,6 +1195,7 @@ OLT Management is in project scope, but the repository still lacks an authoritat
 | Service Area | ✅ Architecture approved | None |
 | Package | ✅ Architecture approved | None |
 | OLT | ✅ Architecture approved | None |
+| FAT | ✅ Architecture approved | None |
 
 ---
 

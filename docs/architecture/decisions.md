@@ -221,6 +221,8 @@ When conflicts occur, follow the Documentation Hierarchy defined in the Architec
 - [Monitoring & Network](#monitoring--network)
   - [OLT Lifecycle Canonical States](#decision-olt-lifecycle-canonical-states)
   - [OLT Permission Namespace and Assignment Rule](#decision-olt-permission-namespace-and-assignment-rule)
+  - [FAT Lifecycle Canonical States](#decision-fat-lifecycle-canonical-states)
+  - [FAT Permission Namespace and Downstream Reachability Rule](#decision-fat-permission-namespace-and-downstream-reachability-rule)
   - [Logical and Physical Topology Separation](#decision-logical-and-physical-topology-separation)
   - [Network Endpoint Terminology](#decision-network-endpoint-terminology)
   - [Health Status Abstraction](#decision-health-status-abstraction)
@@ -1244,6 +1246,46 @@ Without a canonical permission namespace and assignment rule, implementation may
 - Policies, seeders, and navigation can reference one stable OLT namespace.
 - Provisioning and topology services can enforce status-aware OLT selection consistently.
 - OLT lifecycle transitions remain service-owned and auditable.
+
+### Decision: FAT Lifecycle Canonical States
+
+#### Decision
+The canonical lifecycle states and persisted database values for FAT Management are:
+
+- `Planned` -> `planned` - Initial/default state; asset registered but not operationally assignable.
+- `Active` -> `active` - Asset is operationally assignable for downstream distribution scope.
+- `Maintenance` -> `maintenance` - Temporarily unavailable for new operational assignment under maintenance context.
+- `Retired` -> `retired` - Terminal historical state; not operationally assignable.
+
+Capacity saturation and downstream reachability are derived operational conditions and must not replace the FAT lifecycle contract.
+
+#### Reason
+The current documentation references FAT in topology and monitoring contexts, but no canonical lifecycle or persisted database values exist for implementation. The older `saturated` lifecycle mention mixes capacity state with asset lifecycle and would create ambiguous status handling during module generation.
+
+#### Impact
+- `FatStatus` enum can be implemented without ambiguity.
+- `fats.status` default must be `planned`.
+- Capacity saturation becomes a derived operational metric instead of a lifecycle state.
+- Monitoring health remains distinct from the FAT asset lifecycle.
+
+### Decision: FAT Permission Namespace and Downstream Reachability Rule
+
+#### Decision
+FAT Management uses the `fat.*` permission namespace and the following downstream reachability governance:
+
+- FAT CRUD and lifecycle actions are authorized through `fat.view`, `fat.create`, `fat.update`, `fat.activate`, `fat.maintenance`, `fat.retire`, and `fat.export`.
+- Only `active` FAT assets may receive new downstream ONU assignment.
+- FAT operational reachability is derived by pinging all mapped downstream ONU endpoints under the FAT distribution scope.
+- If all mapped ONUs are unreachable while the parent OLT remains reachable, monitoring may classify a probable FAT-side issue.
+- If the parent OLT is unreachable, FAT reachability must become `unknown` rather than an independent FAT failure classification.
+
+#### Reason
+The FAT module requires a permission namespace and a deterministic status derivation contract before topology mapping, services, and UI can be generated. The user-requested rule that FAT status is derived from downstream ONU ping results must be documented before code can safely implement it.
+
+#### Impact
+- Policies, seeders, and navigation can reference one stable FAT namespace.
+- FAT monitoring summaries can derive from downstream ONU scope without mutating the FAT lifecycle column.
+- The data model requires a persisted FAT-to-ONU distribution reference for health aggregation.
 
 ### Decision: Logical and Physical Topology Separation
 

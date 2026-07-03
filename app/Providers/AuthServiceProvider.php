@@ -29,6 +29,7 @@ class AuthServiceProvider extends ServiceProvider
         \App\Models\ServiceArea::class   => \App\Policies\ServiceAreaPolicy::class,
         \App\Models\Package::class       => \App\Policies\PackagePolicy::class,
         \App\Models\Olt::class           => \App\Policies\OltPolicy::class,
+        \App\Models\Fat::class           => \App\Policies\FatPolicy::class,
     ];
 
     public function boot(): void

@@ -2101,6 +2101,26 @@ Installed -> Active -> Retired.
 
 Deletion behavior: Restrict when downstream assets exist.
 
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `olt_id` | BIGINT UNSIGNED | No | FK -> olts.id (RESTRICT) |
+| `odf_code` | VARCHAR(50) | No | Unique operational ODF code |
+| `name` | VARCHAR(255) | No | Display name |
+| `location_name` | VARCHAR(255) | Yes | Human-readable location |
+| `latitude` | DECIMAL(10,7) | Yes | Geo coordinate |
+| `longitude` | DECIMAL(11,7) | Yes | Geo coordinate |
+| `status` | ENUM | No | `installed` (default), `active`, `retired` |
+| `notes` | TEXT | Yes | Internal notes |
+| `created_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `updated_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `deleted_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+| `deleted_at` | TIMESTAMP | Yes | Soft delete |
+
 ### Relationships
 - OLT 1 -> N ODF
 - ODF 1 -> N FAT
@@ -2124,7 +2144,7 @@ No
 Infrastructure
 
 ### Lifecycle Reference
-N/A
+docs/workflows/fat-workflow.md
 
 ### Immutability
 Mutable
@@ -2153,14 +2173,40 @@ Distribution terminal connecting feeder network to last-mile drop.
 Monitoring & Network
 
 ### Lifecycle
-Planned -> Active -> Saturated -> Retired.
+Planned -> Active -> Maintenance -> Retired.
 
 Deletion behavior: Restrict when ONT/Dropcore still attached.
+
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | Primary key, auto-increment |
+| `odf_id` | BIGINT UNSIGNED | No | FK -> odfs.id (RESTRICT) |
+| `service_area_id` | BIGINT UNSIGNED | Yes | FK -> service_areas.id (SET NULL) |
+| `fat_code` | VARCHAR(50) | No | Unique operational FAT code |
+| `name` | VARCHAR(255) | No | Display name |
+| `capacity_ports` | INT UNSIGNED | No | Total designed endpoint capacity |
+| `used_ports` | INT UNSIGNED | No | Default `0` |
+| `splitter_ratio` | VARCHAR(30) | Yes | Optional distribution ratio label |
+| `location_name` | VARCHAR(255) | Yes | Human-readable location |
+| `latitude` | DECIMAL(10,7) | Yes | Geo coordinate |
+| `longitude` | DECIMAL(11,7) | Yes | Geo coordinate |
+| `status` | ENUM | No | `planned` (default), `active`, `maintenance`, `retired` |
+| `last_onu_ping_at` | TIMESTAMP | Yes | Latest downstream ONU reachability evaluation timestamp |
+| `notes` | TEXT | Yes | Internal notes |
+| `created_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `updated_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `deleted_by` | BIGINT UNSIGNED | Yes | FK -> users.id (SET NULL) |
+| `created_at` | TIMESTAMP | No | |
+| `updated_at` | TIMESTAMP | No | |
+| `deleted_at` | TIMESTAMP | Yes | Soft delete |
 
 ### Relationships
 - ODF 1 -> N FAT
 - FAT 1 -> N Dropcore
 - FAT 1 -> N ONT
+- FAT 1 -> N ONU (distribution scope reference)
 - FAT 1 -> N MonitoringEvent
 
 ### Key Attributes
@@ -2168,6 +2214,12 @@ Location, capacity context, service area linkage.
 
 ### Business Rules
 FAT may be used in operational area hierarchy references.
+
+Only `active` FAT assets may receive new downstream ONU assignment.
+
+FAT lifecycle is distinct from downstream ONU reachability status.
+
+FAT reachability is derived from ping results across all mapped downstream ONU endpoints.
 
 ### Notes
 Can act as planning anchor for field operations.
@@ -2182,6 +2234,7 @@ No
 Infrastructure
 
 ### Lifecycle Reference
+docs/workflows/fat-workflow.md
 docs/workflows/network-monitoring-workflow.md
 
 ### Immutability
@@ -2197,7 +2250,10 @@ Yes
 - Global Search: Yes
 
 ### Produces Events
-None
+- FatCreated
+- FatActivated
+- FatMaintenanceStarted
+- FatRetired
 
 ### Consumes Events
 None
@@ -2332,8 +2388,15 @@ Deletion behavior: Soft Delete with Restrict on active monitoring references.
 
 ### Relationships
 - OLT 1 -> N ONU
+- FAT 0..1 -> N ONU
 - ONU 1 -> N MonitoringEvent
 - Subscription 0..1 -> 1 active ONU
+
+### Columns
+
+| Column | Type | Nullable | Notes |
+|---|---|---|---|
+| `fat_id` | BIGINT UNSIGNED | Yes | FK -> fats.id (SET NULL). Distribution scope reference for downstream reachability aggregation. |
 
 ### Key Attributes
 Device identity, operational status, health metrics.
@@ -2343,6 +2406,8 @@ ONU monitoring should expose simplified health status to users.
 
 ### Notes
 Include mapping rules when ONT and ONU are represented separately.
+
+`fat_id` provides operational distribution scope linkage for FAT reachability summaries while OLT remains the aggregate owner of ONU.
 
 ### Owner
 OLT

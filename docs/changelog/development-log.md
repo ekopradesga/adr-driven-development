@@ -1510,3 +1510,73 @@
 
 **Notes:** Static validation passed (`get_errors` found no errors in touched files). A targeted `php artisan test --filter=OltModuleTest` run was attempted, but this environment returned no output, so runtime confirmation remains pending.
 
+---
+
+### 2026-07-03 | Architecture | Sprint 3.5 Pre-Work - FAT Module Architecture Finalization
+
+**Summary:** Closed the FAT module architecture blocker before implementation by formalizing FAT lifecycle governance and ONU-derived reachability semantics. Added canonical FAT lifecycle decisions and `fat.*` permission namespace governance, created a dedicated FAT workflow document, expanded database architecture with ODF/FAT schema and FAT-to-ONU mapping support, expanded business events with FAT lifecycle events, and recorded/closed ARCH-037 in the architecture backlog.
+
+**Files Added:**
+- docs/workflows/fat-workflow.md
+
+**Files Modified:**
+- docs/architecture/decisions.md
+- docs/architecture/glossary.md
+- docs/database/entities.md
+- docs/database/erd.md
+- docs/architecture/business-events.md
+- docs/architecture/architecture-backlog.md
+- docs/changelog/development-log.md
+
+**Architecture Impact:** FAT Management is now implementation-ready with explicit lifecycle states (`planned`, `active`, `maintenance`, `retired`), a documented status-derivation contract based on ping results from all mapped ONUs, parent OLT override rules for operational reachability, event contracts, and schema-level relationship constraints aligned across architecture documents.
+
+**Notes:** Documentation-only pre-work. No runtime code execution performed in this step.
+
+---
+
+### 2026-07-03 | Backend | Sprint 3.5 - FAT Module Implementation
+
+**Summary:** Implemented the complete FAT module following the finalized architecture contract, including required supporting dependencies for topology ownership and ONU mapping. Added FAT/ODF enums and models, FAT lifecycle service/policy/controller/request layers, FAT lifecycle domain events, ODF and FAT migrations, optional `onu.fat_id` relationship migration, factories, FAT views, route and menu integration, policy registration, and permission seeding updates. Implemented FAT health summarization in the service layer using the approved rule: evaluate ping-derived status across all ONUs mapped to each FAT with parent OLT operational reachability gating.
+
+**Files Added:**
+- app/Enums/FatStatus.php
+- app/Enums/OdfStatus.php
+- app/Domain/Events/FatCreated.php
+- app/Domain/Events/FatActivated.php
+- app/Domain/Events/FatMaintenanceStarted.php
+- app/Domain/Events/FatRetired.php
+- app/Models/Fat.php
+- app/Models/Odf.php
+- app/Models/Onu.php
+- app/Policies/FatPolicy.php
+- app/Services/Network/FatService.php
+- app/Http/Controllers/FatController.php
+- app/Http/Requests/Fat/StoreFatRequest.php
+- app/Http/Requests/Fat/UpdateFatRequest.php
+- app/Http/Requests/Fat/ActivateFatRequest.php
+- app/Http/Requests/Fat/MaintenanceFatRequest.php
+- app/Http/Requests/Fat/RetireFatRequest.php
+- database/migrations/2026_07_03_000005_create_odfs_table.php
+- database/migrations/2026_07_03_000006_create_fats_table.php
+- database/migrations/2026_07_03_000007_add_fat_id_to_onus_table.php
+- database/factories/OdfFactory.php
+- database/factories/FatFactory.php
+- database/factories/OnuFactory.php
+- resources/views/fats/index.blade.php
+- resources/views/fats/create.blade.php
+- resources/views/fats/edit.blade.php
+- resources/views/fats/show.blade.php
+- tests/Feature/FatModuleTest.php
+
+**Files Modified:**
+- app/Providers/AuthServiceProvider.php
+- database/seeders/PermissionSeeder.php
+- database/seeders/RolePermissionSeeder.php
+- routes/web.php
+- config/adminlte.php
+- docs/changelog/development-log.md
+
+**Architecture Impact:** FAT lifecycle is now service-owned and policy-protected with canonical asset lifecycle values separated from operational health derivation. FAT status summaries can now be derived consistently from mapped ONU reachability while respecting parent OLT operational constraints.
+
+**Notes:** Static validation passed (`get_errors` found no errors in touched files and dependencies). A targeted `php artisan test --filter=FatModuleTest` run was attempted, but this environment returned no output, so runtime confirmation remains pending.
+
